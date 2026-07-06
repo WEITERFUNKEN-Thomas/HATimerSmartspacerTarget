@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">HA Sensor Smartspacer Target</string>
+    <string name="target_label">Home Assistant Sensor</string>
+    <string name="target_description">Zeigt einen Home Assistant Sensorwert</string>
+    <string name="target_loading">Lädt …</string>
+    <string name="setup_title">Home Assistant Sensor einrichten</string>
+    <string name="setup_base_url_label">Home Assistant Base-URL</string>
+    <string name="setup_base_url_hint">https://homeassistant.local:8123</string>
+    <string name="setup_token_label">Long-Lived Access Token</string>
+    <string name="setup_token_hint">Token</string>
+    <string name="setup_entity_id_label">Entity-ID</string>
+    <string name="setup_entity_id_hint">sensor.aussentemperatur</string>
+    <string name="setup_save">Speichern</string>
+    <string name="setup_error_empty">Bitte alle Felder ausfüllen</string>
+    <string name="setup_intro">Trage hier ein, welcher Home Assistant Sensor angezeigt werden soll. Alle drei Werte findest du in Home Assistant.</string>
+    <string name="setup_base_url_help">Die Adresse, unter der du Home Assistant im Browser öffnest — ohne Pfad und ohne / am Ende.</string>
+    <string name="setup_token_help">In Home Assistant: unten links auf deinen Benutzernamen tippen → Tab „Sicherheit“ → ganz unten „Langlebige Zugangstoken“ → „Token erstellen“. Der Token wird nur einmal angezeigt — direkt kopieren.</string>
+    <string name="setup_entity_id_help">In Home Assistant unter „Entwicklerwerkzeuge → Zustände“ den Sensor suchen — die Entity-ID steht in der ersten Spalte.</string>
+</resources>

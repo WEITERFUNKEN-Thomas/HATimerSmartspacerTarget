@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="2.4"
+        android:scaleY="2.4"
+        android:translateX="25.2"
+        android:translateY="26.4">
+        <!-- Haus -->
+        <path
+            android:pathData="M3,10a2,2 0 0 1 0.709,-1.528l7,-5.999a2,2 0 0 1 2.582,0l7,5.999A2,2 0 0 1 21,10v9a2,2 0 0 1 -2,2H5a2,2 0 0 1 -2,-2z"
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="2"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:fillColor="@android:color/transparent" />
+        <!-- Sensor-Pulslinie -->
+        <path
+            android:pathData="M8,14.5L10,14.5L11.3,11.6L12.9,16.8L14.1,14.5L16,14.5"
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="1.8"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:fillColor="@android:color/transparent" />
+    </group>
+</vector>
