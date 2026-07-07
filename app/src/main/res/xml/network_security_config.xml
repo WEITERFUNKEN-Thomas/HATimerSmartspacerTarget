@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Erlaubt unverschlüsselten HTTP-Traffic. Nötig, weil Home Assistant im Heimnetz oft über
+  eine lokale Adresse (http://homeassistant.local:8123 oder http://192.168.x.x:8123) läuft
+  und Android Klartext seit API 28 sonst standardmäßig blockiert. Da die Ziel-URL vom Nutzer
+  frei eingegeben wird (beliebige lokale IPs), lässt sich das nicht auf feste Domains
+  einschränken. Für externen Zugriff sollte trotzdem immer https genutzt werden.
+-->
+<network-security-config xmlns:tools="http://schemas.android.com/tools">
+    <base-config
+        cleartextTrafficPermitted="true"
+        tools:ignore="InsecureBaseConfiguration" />
+</network-security-config>

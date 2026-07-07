@@ -25,11 +25,15 @@ class HomeAssistantTarget : SmartspacerTargetProvider() {
         val iconRes: Int
         if (value != null) {
             title = value.friendlyName
-            subtitle = listOf(value.state, value.unit)
-                .filter { it.isNotBlank() }
-                .joinToString(" ")
-            // Sensor-eigenes Symbol aus HA (mdi:...), sonst Haus-Fallback
-            iconRes = HaIcons.resolve(value.icon)
+            subtitle = if (isUnavailable(value.state)) {
+                context.getString(R.string.target_unavailable)
+            } else {
+                listOf(value.state, value.unit)
+                    .filter { it.isNotBlank() }
+                    .joinToString(" ")
+            }
+            // Sensor-eigenes Symbol aus HA (mdi:... bzw. device_class), sonst Haus-Fallback
+            iconRes = HaIcons.resolve(value.icon, value.deviceClass).drawableRes
         } else {
             title = settings?.entityId ?: context.getString(R.string.target_label)
             subtitle = context.getString(R.string.target_loading)
@@ -71,6 +75,11 @@ class HomeAssistantTarget : SmartspacerTargetProvider() {
     }
 
     override fun onProviderRemoved(smartspacerId: String) {
-        HomeAssistantPrefs.clear(provideContext(), smartspacerId)
+        val context = provideContext()
+        HomeAssistantPrefs.cancelRefresh(context, smartspacerId)
+        HomeAssistantPrefs.clear(context, smartspacerId)
     }
+
+    private fun isUnavailable(state: String): Boolean =
+        state.trim().lowercase() in setOf("unavailable", "unknown", "none", "")
 }

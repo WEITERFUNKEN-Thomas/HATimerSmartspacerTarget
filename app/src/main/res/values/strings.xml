@@ -3,6 +3,7 @@
     <string name="target_label">Home Assistant Sensor</string>
     <string name="target_description">Zeigt einen Home Assistant Sensorwert</string>
     <string name="target_loading">Lädt …</string>
+    <string name="target_unavailable">Nicht verfügbar</string>
     <string name="setup_title">Home Assistant Sensor einrichten</string>
     <string name="setup_base_url_label">Home Assistant Base-URL</string>
     <string name="setup_base_url_hint">https://homeassistant.local:8123</string>
@@ -16,4 +17,10 @@
     <string name="setup_base_url_help">Die Adresse, unter der du Home Assistant im Browser öffnest — ohne Pfad und ohne / am Ende.</string>
     <string name="setup_token_help">In Home Assistant: unten links auf deinen Benutzernamen tippen → Tab „Sicherheit“ → ganz unten „Langlebige Zugangstoken“ → „Token erstellen“. Der Token wird nur einmal angezeigt — direkt kopieren.</string>
     <string name="setup_entity_id_help">In Home Assistant unter „Entwicklerwerkzeuge → Zustände“ den Sensor suchen — die Entity-ID steht in der ersten Spalte.</string>
+    <string name="setup_cleartext_hint">Tipp: Nur lokale Adressen wie http://homeassistant.local:8123 oder http://192.168.x.x:8123 nutzen unverschlüsseltes HTTP. Extern (z. B. Nabu Casa) immer https verwenden.</string>
+    <string name="setup_test">Verbindung testen</string>
+    <string name="setup_test_running">Teste Verbindung …</string>
+    <string name="setup_test_ok">✓ %1$s: %2$s</string>
+    <string name="setup_test_http">✗ Fehler vom Server (HTTP %1$d). Token oder Entity-ID prüfen.</string>
+    <string name="setup_test_network">✗ Keine Verbindung: %1$s. URL und Netzwerk prüfen.</string>
 </resources>
