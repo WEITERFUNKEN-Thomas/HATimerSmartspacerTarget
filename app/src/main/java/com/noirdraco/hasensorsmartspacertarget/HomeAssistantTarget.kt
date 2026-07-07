@@ -22,14 +22,18 @@ class HomeAssistantTarget : SmartspacerTargetProvider() {
 
         val title: String
         val subtitle: String
+        val iconRes: Int
         if (value != null) {
             title = value.friendlyName
             subtitle = listOf(value.state, value.unit)
                 .filter { it.isNotBlank() }
                 .joinToString(" ")
+            // Sensor-eigenes Symbol aus HA (mdi:...), sonst Haus-Fallback
+            iconRes = HaIcons.resolve(value.icon)
         } else {
             title = settings?.entityId ?: context.getString(R.string.target_label)
             subtitle = context.getString(R.string.target_loading)
+            iconRes = R.drawable.ic_home_assistant
         }
 
         val configIntent = Intent(context, SetupActivity::class.java)
@@ -40,7 +44,7 @@ class HomeAssistantTarget : SmartspacerTargetProvider() {
             componentName = ComponentName(context, HomeAssistantTarget::class.java),
             title = Text(title),
             subtitle = Text(subtitle),
-            icon = Icon(AndroidIcon.createWithResource(context, R.drawable.ic_home_assistant)),
+            icon = Icon(AndroidIcon.createWithResource(context, iconRes)),
             onClick = TapAction(intent = configIntent)
         ).create().apply {
             canBeDismissed = false

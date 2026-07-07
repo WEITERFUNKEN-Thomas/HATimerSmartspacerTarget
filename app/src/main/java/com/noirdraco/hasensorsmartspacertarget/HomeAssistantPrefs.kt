@@ -19,6 +19,8 @@ data class SensorValue(
     val state: String,
     val friendlyName: String,
     val unit: String,
+    // MDI-Name aus dem HA-Attribut "icon", z. B. "mdi:trash-can" (leer, falls nicht gesetzt)
+    val icon: String,
     val timestamp: Long
 )
 
@@ -64,6 +66,7 @@ object HomeAssistantPrefs {
             .put("state", value.state)
             .put("friendlyName", value.friendlyName)
             .put("unit", value.unit)
+            .put("icon", value.icon)
             .put("timestamp", value.timestamp)
         prefs(context).edit { putString(KEY_LAST_VALUE_PREFIX + smartspacerId, json.toString()) }
     }
@@ -76,6 +79,7 @@ object HomeAssistantPrefs {
                 state = json.getString("state"),
                 friendlyName = json.getString("friendlyName"),
                 unit = json.optString("unit"),
+                icon = json.optString("icon"),
                 timestamp = json.getLong("timestamp")
             )
         }.getOrNull()

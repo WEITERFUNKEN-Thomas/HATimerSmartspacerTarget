@@ -59,6 +59,7 @@ class HomeAssistantWorker(
                     friendlyName = attributes?.optString("friendly_name")
                         ?.takeIf { it.isNotBlank() } ?: settings.entityId,
                     unit = attributes?.optString("unit_of_measurement").orEmpty(),
+                    icon = attributes?.optString("icon").orEmpty(),
                     timestamp = System.currentTimeMillis()
                 )
             }
