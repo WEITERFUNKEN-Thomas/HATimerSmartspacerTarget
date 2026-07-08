@@ -2,6 +2,7 @@ package com.noirdraco.hasensorsmartspacertarget
 
 import android.content.ComponentName
 import android.content.Intent
+import android.net.Uri
 import com.kieronquinn.app.smartspacer.sdk.SmartspacerConstants
 import com.kieronquinn.app.smartspacer.sdk.model.CompatibilityState
 import com.kieronquinn.app.smartspacer.sdk.model.SmartspaceTarget
@@ -40,8 +41,17 @@ class HomeAssistantTarget : SmartspacerTargetProvider() {
             iconRes = R.drawable.ic_home_assistant
         }
 
-        val configIntent = Intent(context, SetupActivity::class.java)
-            .putExtra(SmartspacerConstants.EXTRA_SMARTSPACER_ID, smartspacerId)
+        // Tap öffnet den Verlauf dieses Sensors in Home Assistant (fängt die HA-App den Link
+        // nicht ab, landet er im Browser). Ohne gespeicherte Einstellungen zurück zur Setup-Seite.
+        val onClickIntent = if (settings != null) {
+            val historyUrl = settings.baseUrl.trimEnd('/') +
+                "/history?entity_id=" + Uri.encode(settings.entityId)
+            Intent(Intent.ACTION_VIEW, Uri.parse(historyUrl))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        } else {
+            Intent(context, SetupActivity::class.java)
+                .putExtra(SmartspacerConstants.EXTRA_SMARTSPACER_ID, smartspacerId)
+        }
 
         val target = TargetTemplate.Basic(
             id = "ha_$smartspacerId",
@@ -49,7 +59,7 @@ class HomeAssistantTarget : SmartspacerTargetProvider() {
             title = Text(title),
             subtitle = Text(subtitle),
             icon = Icon(AndroidIcon.createWithResource(context, iconRes)),
-            onClick = TapAction(intent = configIntent)
+            onClick = TapAction(intent = onClickIntent)
         ).create().apply {
             canBeDismissed = false
         }
