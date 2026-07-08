@@ -4,13 +4,11 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- Damit resolveActivity die Home-Assistant-App (homeassistant://) trotz Package-Visibility
-         ab Android 11 sehen kann -->
+    <!-- Damit die App die Home-Assistant-App trotz Package-Visibility ab Android 11 sehen und
+         den Tap gezielt dorthin schicken kann -->
     <queries>
-        <intent>
-            <action android:name="android.intent.action.VIEW" />
-            <data android:scheme="homeassistant" />
-        </intent>
+        <package android:name="io.homeassistant.companion.android" />
+        <package android:name="io.homeassistant.companion.android.minimal" />
     </queries>
 
     <application

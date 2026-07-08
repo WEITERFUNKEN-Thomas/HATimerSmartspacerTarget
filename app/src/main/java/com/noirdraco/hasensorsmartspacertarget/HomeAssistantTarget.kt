@@ -1,7 +1,9 @@
 package com.noirdraco.hasensorsmartspacertarget
 
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import com.kieronquinn.app.smartspacer.sdk.SmartspacerConstants
 import com.kieronquinn.app.smartspacer.sdk.model.CompatibilityState
@@ -41,24 +43,23 @@ class HomeAssistantTarget : SmartspacerTargetProvider() {
             iconRes = R.drawable.ic_home_assistant
         }
 
-        // Tap öffnet den Verlauf dieses Sensors in Home Assistant. Bevorzugt der App-Deep-Link
-        // (homeassistant://): nutzt die angemeldete Sitzung der HA-App, landet also direkt auf
-        // der Sensor-Seite statt auf einem Login-Screen. Ohne installierte HA-App als Fallback
-        // die Web-Oberfläche im Browser. Ohne gespeicherte Einstellungen zurück zur Setup-Seite.
+        // Tap öffnet den Verlauf dieses Sensors in Home Assistant. Ist die HA-App installiert,
+        // wird sie per Deep-Link (homeassistant://) und explizit gesetztem Paket geöffnet — so
+        // fängt der Browser den Link garantiert nicht ab und die angemeldete Sitzung der App
+        // wird genutzt (kein Login-Screen). Nur ohne HA-App als Fallback die Web-Oberfläche.
         val onClickIntent = if (settings != null) {
             val entityQuery = "history?entity_id=" + Uri.encode(settings.entityId)
-            val appDeepLink = Intent(
-                Intent.ACTION_VIEW, Uri.parse("homeassistant://navigate/$entityQuery")
-            )
-            val intent = if (appDeepLink.resolveActivity(context.packageManager) != null) {
-                appDeepLink
+            val haPackage = installedHaPackage(context)
+            if (haPackage != null) {
+                Intent(Intent.ACTION_VIEW, Uri.parse("homeassistant://navigate/$entityQuery"))
+                    .setPackage(haPackage)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             } else {
                 Intent(
                     Intent.ACTION_VIEW,
                     Uri.parse(settings.baseUrl.trimEnd('/') + "/" + entityQuery)
-                )
+                ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         } else {
             Intent(context, SetupActivity::class.java)
                 .putExtra(SmartspacerConstants.EXTRA_SMARTSPACER_ID, smartspacerId)
@@ -103,4 +104,19 @@ class HomeAssistantTarget : SmartspacerTargetProvider() {
 
     private fun isUnavailable(state: String): Boolean =
         state.trim().lowercase() in setOf("unavailable", "unknown", "none", "")
+
+    // Paketnamen der Home-Assistant-App (Vollversion und minimale Variante)
+    private val haPackages = listOf(
+        "io.homeassistant.companion.android",
+        "io.homeassistant.companion.android.minimal"
+    )
+
+    private fun installedHaPackage(context: Context): String? = haPackages.firstOrNull {
+        try {
+            context.packageManager.getPackageInfo(it, 0)
+            true
+        } catch (e: PackageManager.NameNotFoundException) {
+            false
+        }
+    }
 }
