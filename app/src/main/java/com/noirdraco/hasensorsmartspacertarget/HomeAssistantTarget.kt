@@ -41,13 +41,24 @@ class HomeAssistantTarget : SmartspacerTargetProvider() {
             iconRes = R.drawable.ic_home_assistant
         }
 
-        // Tap öffnet den Verlauf dieses Sensors in Home Assistant (fängt die HA-App den Link
-        // nicht ab, landet er im Browser). Ohne gespeicherte Einstellungen zurück zur Setup-Seite.
+        // Tap öffnet den Verlauf dieses Sensors in Home Assistant. Bevorzugt der App-Deep-Link
+        // (homeassistant://): nutzt die angemeldete Sitzung der HA-App, landet also direkt auf
+        // der Sensor-Seite statt auf einem Login-Screen. Ohne installierte HA-App als Fallback
+        // die Web-Oberfläche im Browser. Ohne gespeicherte Einstellungen zurück zur Setup-Seite.
         val onClickIntent = if (settings != null) {
-            val historyUrl = settings.baseUrl.trimEnd('/') +
-                "/history?entity_id=" + Uri.encode(settings.entityId)
-            Intent(Intent.ACTION_VIEW, Uri.parse(historyUrl))
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            val entityQuery = "history?entity_id=" + Uri.encode(settings.entityId)
+            val appDeepLink = Intent(
+                Intent.ACTION_VIEW, Uri.parse("homeassistant://navigate/$entityQuery")
+            )
+            val intent = if (appDeepLink.resolveActivity(context.packageManager) != null) {
+                appDeepLink
+            } else {
+                Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse(settings.baseUrl.trimEnd('/') + "/" + entityQuery)
+                )
+            }
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         } else {
             Intent(context, SetupActivity::class.java)
                 .putExtra(SmartspacerConstants.EXTRA_SMARTSPACER_ID, smartspacerId)
