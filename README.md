@@ -1,5 +1,7 @@
 # HA Sensor Smartspacer Target
 
+🇬🇧 **English version:** [README.en.md](README.en.md) · 🇩🇪 Deutsch (diese Datei)
+
 Smartspacer-Plugin, das einen Home-Assistant-Sensorwert per REST-API abruft und als
 Smartspacer-Target (z. B. auf dem Homescreen / Sperrbildschirm) anzeigt.
 
@@ -19,7 +21,8 @@ Du brauchst drei Angaben:
 > ```
 > curl -H "Authorization: Bearer DEIN_TOKEN" http://homeassistant.local:8123/api/states/sensor.aussentemperatur
 > ```
-> Kommt JSON mit `"state": "..."` zurück, passt alles.
+> Kommt JSON mit `"state": "..."` zurück, passt alles. Alternativ in der Einrichtung den
+> Button **„Verbindung testen"** nutzen.
 
 ### 2. Target in Smartspacer hinzufügen und Werte eintragen
 
@@ -30,20 +33,21 @@ Du brauchst drei Angaben:
    - **Home Assistant Base-URL**
    - **Long-Lived Access Token**
    - **Entity-ID**
-5. **Speichern** tippen
+5. Optional **„Verbindung testen"** tippen (zeigt sofort den Sensorwert oder den Fehler), dann **Speichern**
 
 Direkt nach dem Speichern wird der erste Wert im Hintergrund abgerufen; bis dahin zeigt das
 Target kurz „Lädt …". Danach aktualisiert sich der Wert automatisch etwa alle **15 Minuten**.
+Als Symbol wird das Icon des Sensors aus Home Assistant übernommen (aus `icon` bzw.
+`device_class`), sonst ein Haus-Symbol.
 
-### 3. Werte später ändern
+### 3. Target antippen und Werte ändern
 
-Zwei Wege führen zurück zur Einrichtungsseite:
-
-- **Auf das Target tippen** (auf dem Homescreen/Sperrbildschirm), oder
-- in der Smartspacer-App unter **Targets** das „Home Assistant Sensor"-Target antippen und
-  dessen **Einstellungen** öffnen
-
-Die Felder sind dort mit den gespeicherten Werten vorausgefüllt.
+- **Auf das Target tippen** (Homescreen/Sperrbildschirm) öffnet den **Verlauf dieses Sensors in
+  der Home-Assistant-App** (ist die App nicht installiert, wird die Weboberfläche im Browser
+  geöffnet).
+- Zum **Ändern** der Werte in der Smartspacer-App unter **Targets** das „Home Assistant Sensor"-
+  Target öffnen und dessen **Einstellungen** aufrufen — die Felder sind mit den gespeicherten
+  Werten vorausgefüllt.
 
 ### Mehrere Sensoren
 
@@ -56,9 +60,11 @@ eigenen Token und ihre eigene Entity-ID. Einfach in Smartspacer ein weiteres
 - Das Target lässt sich **nicht wegwischen**; entfernen geht nur über die
   Smartspacer-Einstellungen (dabei werden die gespeicherten Werte inkl. Token gelöscht).
 - Bei Netzwerkfehlern bleibt der **letzte bekannte Wert** stehen — es wird nichts geleert.
-- Der Access Token liegt in normalen, **unverschlüsselten** SharedPreferences. Für den
-  privaten Gebrauch ok; bei Bedarf auf `androidx.security:security-crypto`
-  (EncryptedSharedPreferences) umstellen.
+  Ein `unavailable`/`unknown`-Zustand wird als „Nicht verfügbar" angezeigt.
+- Der Access Token wird in **EncryptedSharedPreferences** (androidx.security) verschlüsselt
+  im Android-Keystore abgelegt.
+- Lokale Adressen (`http://…`) werden unterstützt; für externen Zugriff (z. B. Nabu Casa)
+  immer `https` verwenden.
 - Der Token sollte in Home Assistant einem Benutzer mit möglichst wenig Rechten gehören,
   wenn du auf Nummer sicher gehen willst.
 

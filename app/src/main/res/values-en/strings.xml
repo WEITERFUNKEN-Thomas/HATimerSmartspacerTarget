@@ -1,0 +1,26 @@
+<resources>
+    <string name="app_name">HA Sensor Smartspacer Target</string>
+    <string name="target_label">Home Assistant Sensor</string>
+    <string name="target_description">Shows a Home Assistant sensor value</string>
+    <string name="target_loading">Loading …</string>
+    <string name="target_unavailable">Unavailable</string>
+    <string name="setup_title">Set up Home Assistant sensor</string>
+    <string name="setup_base_url_label">Home Assistant base URL</string>
+    <string name="setup_base_url_hint">https://homeassistant.local:8123</string>
+    <string name="setup_token_label">Long-lived access token</string>
+    <string name="setup_token_hint">Token</string>
+    <string name="setup_entity_id_label">Entity ID</string>
+    <string name="setup_entity_id_hint">sensor.outdoor_temperature</string>
+    <string name="setup_save">Save</string>
+    <string name="setup_error_empty">Please fill in all fields</string>
+    <string name="setup_intro">Enter which Home Assistant sensor to display. You\'ll find all three values in Home Assistant.</string>
+    <string name="setup_base_url_help">The address you use to open Home Assistant in your browser — without a path and without a trailing /.</string>
+    <string name="setup_token_help">In Home Assistant: tap your username at the bottom left → \"Security\" tab → at the very bottom \"Long-lived access tokens\" → \"Create token\". The token is shown only once — copy it right away.</string>
+    <string name="setup_entity_id_help">In Home Assistant under \"Developer tools → States\", find your sensor — the entity ID is in the first column.</string>
+    <string name="setup_cleartext_hint">Tip: Only local addresses like http://homeassistant.local:8123 or http://192.168.x.x:8123 use unencrypted HTTP. For external access (e.g. Nabu Casa) always use https.</string>
+    <string name="setup_test">Test connection</string>
+    <string name="setup_test_running">Testing connection …</string>
+    <string name="setup_test_ok">✓ %1$s: %2$s</string>
+    <string name="setup_test_http">✗ Server error (HTTP %1$d). Check the token or entity ID.</string>
+    <string name="setup_test_network">✗ No connection: %1$s. Check the URL and network.</string>
+</resources>
