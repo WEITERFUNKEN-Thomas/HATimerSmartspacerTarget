@@ -51,6 +51,27 @@ is taken from the sensor in Home Assistant (from `icon` or `device_class`), othe
 The target can be **added more than once** — each instance has its own URL, its own token and
 its own entity ID. Just create another "Home Assistant Sensor" target in Smartspacer.
 
+## Condition: only show when you're home (presence)
+
+In addition to the sensor target, the plugin ships a **condition** ("requirement"). With it you can
+make any Smartspacer target/complication depend on whether you are **home**.
+
+### Setup
+
+1. In Smartspacer, open the **requirements** of the target/complication you want and add one.
+2. Pick **"Home Assistant: At home"** from the list.
+3. Enter the base URL, token and the **presence entity** — the entity that represents your presence
+   in Home Assistant, usually `person.…` or `device_tracker.…`, with state `home` / `not_home`.
+4. Optionally tap **"Test connection"**, then **Save**.
+
+The condition is **met when the state is `home`**. In Smartspacer it can be **inverted** to express
+"only when I'm **away**".
+
+> **Note on freshness:** Smartspacer only evaluates requirements when the Smartspace becomes visible
+> or a related target refreshes — not on a fixed schedule. Presence is re-fetched from Home
+> Assistant at most about every **2 minutes**. That's plenty for "home/away", but it is not
+> second-by-second live tracking.
+
 ## Notes
 
 - The target **cannot be swiped away**; removing it is only possible via the Smartspacer settings

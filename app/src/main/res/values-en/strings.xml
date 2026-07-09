@@ -23,4 +23,10 @@
     <string name="setup_test_ok">✓ %1$s: %2$s</string>
     <string name="setup_test_http">✗ Server error (HTTP %1$d). Check the token or entity ID.</string>
     <string name="setup_test_network">✗ No connection: %1$s. Check the URL and network.</string>
+    <string name="requirement_label">Home Assistant: At home</string>
+    <string name="requirement_description">Condition met when your presence in Home Assistant is \"home\"</string>
+    <string name="requirement_setup_title">Set up presence</string>
+    <string name="requirement_setup_intro">Enter which presence entity from Home Assistant to check. The condition is met when its state is \"home\" (invert it in Smartspacer, e.g. for \"away\").</string>
+    <string name="requirement_entity_hint">person.thomas</string>
+    <string name="requirement_entity_help">In Home Assistant under \"Developer tools → States\", find the entity that represents your presence — usually \"person.…\" or \"device_tracker.…\". State \"home\" means you\'re home.</string>
 </resources>

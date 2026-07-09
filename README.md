@@ -55,6 +55,29 @@ Das Target kann **mehrfach hinzugefügt** werden — jede Instanz hat ihre eigen
 eigenen Token und ihre eigene Entity-ID. Einfach in Smartspacer ein weiteres
 „Home Assistant Sensor"-Target anlegen.
 
+## Bedingung: nur anzeigen, wenn du zuhause bist (Anwesenheit)
+
+Zusätzlich zum Sensor-Target bringt das Plugin eine **Bedingung** („Requirement") mit. Damit kannst
+du in Smartspacer beliebige Targets/Complications davon abhängig machen, ob du **zuhause** bist.
+
+### Einrichten
+
+1. In Smartspacer beim gewünschten Target/Complication die **Bedingungen** („Requirements")
+   öffnen und eine hinzufügen.
+2. In der Liste **„Home Assistant: Zuhause"** auswählen.
+3. Base-URL, Token und die **Anwesenheits-Entity** eintragen. Das ist die Entität, die in Home
+   Assistant deine Anwesenheit abbildet — meist `person.…` oder `device_tracker.…`, mit Zustand
+   `home` / `not_home`.
+4. Optional **„Verbindung testen"** tippen, dann **Speichern**.
+
+Die Bedingung ist **erfüllt, wenn der Zustand `home` ist**. In Smartspacer lässt sie sich
+**invertieren**, um „nur wenn ich **unterwegs** bin" abzubilden.
+
+> **Hinweis zur Aktualität:** Bedingungen werden von Smartspacer nur ausgewertet, wenn die
+> Smartspace sichtbar wird oder ein zugehöriges Target aktualisiert — nicht in festem Takt. Die
+> Anwesenheit wird dabei höchstens etwa alle **2 Minuten** neu aus Home Assistant geholt. Für
+> „zuhause/unterwegs" ist das ausreichend, es ist aber kein sekundengenaues Live-Tracking.
+
 ## Hinweise
 
 - Das Target lässt sich **nicht wegwischen**; entfernen geht nur über die

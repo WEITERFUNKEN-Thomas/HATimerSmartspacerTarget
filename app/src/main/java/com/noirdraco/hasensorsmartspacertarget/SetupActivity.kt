@@ -14,6 +14,14 @@ import com.kieronquinn.app.smartspacer.sdk.SmartspacerConstants
  */
 class SetupActivity : Activity() {
 
+    companion object {
+        // Unterscheidet, ob diese Seite die Sensor-Anzeige (Target) oder die Anwesenheits-
+        // Bedingung (Requirement) einrichtet. Der Wert kommt aus dem setup-/configActivity-Intent.
+        const val EXTRA_MODE = "setup_mode"
+        const val MODE_SENSOR = "sensor"
+        const val MODE_PRESENCE = "presence"
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val smartspacerId = intent.getStringExtra(SmartspacerConstants.EXTRA_SMARTSPACER_ID)
@@ -21,6 +29,7 @@ class SetupActivity : Activity() {
             finish()
             return
         }
+        val isPresence = intent.getStringExtra(EXTRA_MODE) == MODE_PRESENCE
         setContentView(R.layout.activity_setup)
 
         val baseUrlField = findViewById<EditText>(R.id.input_base_url)
@@ -28,6 +37,14 @@ class SetupActivity : Activity() {
         val entityIdField = findViewById<EditText>(R.id.input_entity_id)
         val statusView = findViewById<TextView>(R.id.text_status)
         val testButton = findViewById<Button>(R.id.button_test)
+
+        if (isPresence) {
+            setTitle(R.string.requirement_setup_title)
+            findViewById<TextView>(R.id.text_title).setText(R.string.requirement_setup_title)
+            findViewById<TextView>(R.id.text_intro).setText(R.string.requirement_setup_intro)
+            entityIdField.setHint(R.string.requirement_entity_hint)
+            findViewById<TextView>(R.id.text_entity_help).setText(R.string.requirement_entity_help)
+        }
 
         HomeAssistantPrefs.loadSettings(this, smartspacerId)?.let {
             baseUrlField.setText(it.baseUrl)
@@ -76,7 +93,11 @@ class SetupActivity : Activity() {
             HomeAssistantPrefs.saveSettings(this, smartspacerId, settings)
             // Sofort abrufen, damit der erste Wert nicht erst nach dem nächsten
             // periodischen Refresh erscheint
-            HomeAssistantPrefs.enqueueRefresh(this, smartspacerId)
+            if (isPresence) {
+                HomeAssistantPrefs.enqueuePresenceRefresh(this, smartspacerId)
+            } else {
+                HomeAssistantPrefs.enqueueRefresh(this, smartspacerId)
+            }
             setResult(RESULT_OK)
             finish()
         }

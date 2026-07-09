@@ -23,4 +23,10 @@
     <string name="setup_test_ok">✓ %1$s: %2$s</string>
     <string name="setup_test_http">✗ Fehler vom Server (HTTP %1$d). Token oder Entity-ID prüfen.</string>
     <string name="setup_test_network">✗ Keine Verbindung: %1$s. URL und Netzwerk prüfen.</string>
+    <string name="requirement_label">Home Assistant: Zuhause</string>
+    <string name="requirement_description">Bedingung erfüllt, wenn deine Anwesenheit in Home Assistant „home“ ist</string>
+    <string name="requirement_setup_title">Anwesenheit einrichten</string>
+    <string name="requirement_setup_intro">Trage ein, welche Anwesenheits-Entität aus Home Assistant geprüft werden soll. Die Bedingung ist erfüllt, wenn ihr Zustand „home“ ist (invertierbar in Smartspacer, z. B. für „unterwegs“).</string>
+    <string name="requirement_entity_hint">person.thomas</string>
+    <string name="requirement_entity_help">In Home Assistant unter „Entwicklerwerkzeuge → Zustände“ die Entität suchen, die deine Anwesenheit abbildet — meist „person.…“ oder „device_tracker.…“. Zustand „home“ = zuhause.</string>
 </resources>

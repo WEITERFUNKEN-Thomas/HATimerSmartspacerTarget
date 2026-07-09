@@ -146,4 +146,31 @@ object HomeAssistantPrefs {
     fun cancelRefresh(context: Context, smartspacerId: String) {
         WorkManager.getInstance(context).cancelUniqueWork(workName(smartspacerId))
     }
+
+    private fun presenceWorkName(smartspacerId: String) = "ha_presence_$smartspacerId"
+
+    /**
+     * Refresh für die Anwesenheits-Bedingung (Requirement). Wird u. a. aus
+     * [HomePresenceRequirement.isRequirementMet] angestoßen; deshalb [ExistingWorkPolicy.KEEP],
+     * damit ein laufender Abruf nicht bei jeder Auswertung neu gestartet wird.
+     */
+    fun enqueuePresenceRefresh(context: Context, smartspacerId: String) {
+        val request = OneTimeWorkRequestBuilder<HomePresenceWorker>()
+            .setInputData(workDataOf(HomePresenceWorker.KEY_SMARTSPACER_ID to smartspacerId))
+            .setBackoffCriteria(
+                BackoffPolicy.EXPONENTIAL,
+                WorkRequest.MIN_BACKOFF_MILLIS,
+                TimeUnit.MILLISECONDS
+            )
+            .build()
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            presenceWorkName(smartspacerId),
+            ExistingWorkPolicy.KEEP,
+            request
+        )
+    }
+
+    fun cancelPresenceRefresh(context: Context, smartspacerId: String) {
+        WorkManager.getInstance(context).cancelUniqueWork(presenceWorkName(smartspacerId))
+    }
 }

@@ -36,6 +36,16 @@
             </intent-filter>
         </provider>
 
+        <provider
+            android:name=".HomePresenceRequirement"
+            android:authorities="${applicationId}.requirement.homepresence"
+            android:permission="com.kieronquinn.app.smartspacer.permission.ACCESS_SMARTSPACER_REQUIREMENTS"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.kieronquinn.app.smartspacer.REQUIREMENT" />
+            </intent-filter>
+        </provider>
+
         <receiver
             android:name=".HomeAssistantUpdateReceiver"
             android:exported="true"
