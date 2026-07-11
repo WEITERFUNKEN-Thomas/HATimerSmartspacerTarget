@@ -24,6 +24,9 @@ class HomePresenceRequirement : SmartspacerRequirementProvider() {
         // veraltet oder leer, wird ein Abruf im Hintergrund angestoßen; der Worker meldet per
         // notifyChange zurück, sobald sich der Zustand geändert hat.
         if (settings != null) {
+            // Selbstheilung: stellt sicher, dass der periodische Hintergrund-Takt läuft — auch für
+            // Instanzen, die vor Einführung des periodischen Refresh eingerichtet wurden (KEEP).
+            HomeAssistantPrefs.enqueuePresencePeriodicRefresh(context, smartspacerId)
             val stale = value == null ||
                 System.currentTimeMillis() - value.timestamp > REFRESH_THRESHOLD_MS
             if (stale) HomeAssistantPrefs.enqueuePresenceRefresh(context, smartspacerId)
@@ -48,6 +51,7 @@ class HomePresenceRequirement : SmartspacerRequirementProvider() {
     override fun onProviderRemoved(smartspacerId: String) {
         val context = provideContext()
         HomeAssistantPrefs.cancelPresenceRefresh(context, smartspacerId)
+        HomeAssistantPrefs.cancelPresencePeriodicRefresh(context, smartspacerId)
         HomeAssistantPrefs.clear(context, smartspacerId)
     }
 

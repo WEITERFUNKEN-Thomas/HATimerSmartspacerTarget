@@ -95,6 +95,9 @@ class SetupActivity : Activity() {
             // periodischen Refresh erscheint
             if (isPresence) {
                 HomeAssistantPrefs.enqueuePresenceRefresh(this, smartspacerId)
+                // Unabhängiger periodischer Takt, damit Anwesenheitsänderungen auch ohne
+                // Auswertung durch Smartspacer bemerkt werden
+                HomeAssistantPrefs.enqueuePresencePeriodicRefresh(this, smartspacerId)
             } else {
                 HomeAssistantPrefs.enqueueRefresh(this, smartspacerId)
             }

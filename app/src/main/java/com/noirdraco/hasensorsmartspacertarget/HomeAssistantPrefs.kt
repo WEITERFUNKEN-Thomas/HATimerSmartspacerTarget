@@ -6,8 +6,10 @@ import androidx.core.content.edit
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import androidx.work.BackoffPolicy
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkRequest
 import androidx.work.workDataOf
@@ -172,5 +174,37 @@ object HomeAssistantPrefs {
 
     fun cancelPresenceRefresh(context: Context, smartspacerId: String) {
         WorkManager.getInstance(context).cancelUniqueWork(presenceWorkName(smartspacerId))
+    }
+
+    private fun presencePeriodicWorkName(smartspacerId: String) = "ha_presence_periodic_$smartspacerId"
+
+    /**
+     * Periodischer Hintergrund-Refresh für die Anwesenheits-Bedingung. Nötig, weil Smartspacer
+     * Requirements — anders als Targets (`REQUEST_TARGET_UPDATE`) — keinen eigenen periodischen
+     * Auslöser gibt. Ohne diesen Takt würde eine Anwesenheitsänderung erst bemerkt, wenn Smartspacer
+     * die Bedingung ohnehin auswertet. Der Worker meldet `notifyChange` nur bei State-Wechsel.
+     *
+     * [ExistingPeriodicWorkPolicy.KEEP], damit wiederholte Aufrufe (auch aus
+     * [HomePresenceRequirement.isRequirementMet] zum Selbstheilen bestehender Instanzen) den
+     * 15-Minuten-Takt nicht ständig zurücksetzen. WorkManager übersteht Neustarts.
+     */
+    fun enqueuePresencePeriodicRefresh(context: Context, smartspacerId: String) {
+        val request = PeriodicWorkRequestBuilder<HomePresenceWorker>(15, TimeUnit.MINUTES)
+            .setInputData(workDataOf(HomePresenceWorker.KEY_SMARTSPACER_ID to smartspacerId))
+            .setBackoffCriteria(
+                BackoffPolicy.EXPONENTIAL,
+                WorkRequest.MIN_BACKOFF_MILLIS,
+                TimeUnit.MILLISECONDS
+            )
+            .build()
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            presencePeriodicWorkName(smartspacerId),
+            ExistingPeriodicWorkPolicy.KEEP,
+            request
+        )
+    }
+
+    fun cancelPresencePeriodicRefresh(context: Context, smartspacerId: String) {
+        WorkManager.getInstance(context).cancelUniqueWork(presencePeriodicWorkName(smartspacerId))
     }
 }
