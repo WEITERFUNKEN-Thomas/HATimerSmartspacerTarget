@@ -207,4 +207,24 @@ object HomeAssistantPrefs {
     fun cancelPresencePeriodicRefresh(context: Context, smartspacerId: String) {
         WorkManager.getInstance(context).cancelUniqueWork(presencePeriodicWorkName(smartspacerId))
     }
+
+    // Register der aktiven Anwesenheits-Requirement-IDs. Nötig, weil der Target-Update-Broadcast
+    // (der zuverlässige, von Smartspacer getaktete Auslöser) nur Target-IDs kennt — so können wir
+    // beim selben Weckruf auch die Requirements auffrischen. Als \n-getrennter String abgelegt
+    // (IDs sind UUIDs), um StringSet-Eigenheiten von EncryptedSharedPreferences zu vermeiden.
+    private const val KEY_PRESENCE_IDS = "presence_ids"
+
+    fun presenceIds(context: Context): Set<String> =
+        prefs(context).getString(KEY_PRESENCE_IDS, null)
+            ?.split("\n")?.filter { it.isNotBlank() }?.toSet() ?: emptySet()
+
+    fun addPresenceId(context: Context, smartspacerId: String) {
+        val ids = presenceIds(context).toMutableSet().apply { add(smartspacerId) }
+        prefs(context).edit { putString(KEY_PRESENCE_IDS, ids.joinToString("\n")) }
+    }
+
+    fun removePresenceId(context: Context, smartspacerId: String) {
+        val ids = presenceIds(context).toMutableSet().apply { remove(smartspacerId) }
+        prefs(context).edit { putString(KEY_PRESENCE_IDS, ids.joinToString("\n")) }
+    }
 }

@@ -13,5 +13,11 @@ class HomeAssistantUpdateReceiver : SmartspacerTargetUpdateReceiver() {
         requestTargets
             .filter { it.authority == authority }
             .forEach { HomeAssistantPrefs.enqueueRefresh(context, it.smartspacerId) }
+
+        // Anwesenheits-Requirements bekommen von Smartspacer keinen eigenen Update-Broadcast.
+        // Wir nutzen diesen zuverlässigen, von Smartspacer getakteten Weckruf, um auch sie
+        // aufzufrischen (deutlich verlässlicher als WorkManager-Periodic im Standby/Doze).
+        HomeAssistantPrefs.presenceIds(context)
+            .forEach { HomeAssistantPrefs.enqueuePresenceRefresh(context, it) }
     }
 }

@@ -94,9 +94,10 @@ class SetupActivity : Activity() {
             // Sofort abrufen, damit der erste Wert nicht erst nach dem nächsten
             // periodischen Refresh erscheint
             if (isPresence) {
+                // Fürs Auffrischen per Target-Update-Broadcast registrieren (zuverlässiger Takt)
+                HomeAssistantPrefs.addPresenceId(this, smartspacerId)
                 HomeAssistantPrefs.enqueuePresenceRefresh(this, smartspacerId)
-                // Unabhängiger periodischer Takt, damit Anwesenheitsänderungen auch ohne
-                // Auswertung durch Smartspacer bemerkt werden
+                // Zusätzlich unabhängiger periodischer Fallback-Takt
                 HomeAssistantPrefs.enqueuePresencePeriodicRefresh(this, smartspacerId)
             } else {
                 HomeAssistantPrefs.enqueueRefresh(this, smartspacerId)
