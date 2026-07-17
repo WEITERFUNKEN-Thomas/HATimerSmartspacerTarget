@@ -97,6 +97,8 @@ class SetupActivity : Activity() {
                 // Fürs Auffrischen per Target-Update-Broadcast registrieren (zuverlässiger Takt)
                 HomeAssistantPrefs.addPresenceId(this, smartspacerId)
                 HomeAssistantPrefs.enqueuePresenceRefresh(this, smartspacerId)
+                // Doze-fester Heartbeat (AlarmManager) — primärer autonomer Takt im Standby
+                HomeAssistantPrefs.schedulePresenceHeartbeat(this)
                 // Zusätzlich unabhängiger periodischer Fallback-Takt
                 HomeAssistantPrefs.enqueuePresencePeriodicRefresh(this, smartspacerId)
             } else {

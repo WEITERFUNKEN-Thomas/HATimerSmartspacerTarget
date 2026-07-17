@@ -10,9 +10,8 @@ class HomeAssistantUpdateReceiver : SmartspacerTargetUpdateReceiver() {
         requestTargets: List<RequestTarget>
     ) {
         val authority = "${context.packageName}.target.homeassistant"
-        requestTargets
-            .filter { it.authority == authority }
-            .forEach { HomeAssistantPrefs.enqueueRefresh(context, it.smartspacerId) }
+        val targetIds = requestTargets.filter { it.authority == authority }.map { it.smartspacerId }
+        targetIds.forEach { HomeAssistantPrefs.enqueueRefresh(context, it) }
 
         // Anwesenheits-Requirements bekommen von Smartspacer keinen eigenen Update-Broadcast.
         // Wir nutzen diesen zuverlässigen, von Smartspacer getakteten Weckruf, um auch sie

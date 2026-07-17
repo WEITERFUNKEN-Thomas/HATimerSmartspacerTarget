@@ -1,14 +1,20 @@
 package com.noirdraco.hasensorsmartspacertarget
 
+import android.app.AlarmManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import androidx.work.BackoffPolicy
+import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkRequest
@@ -159,6 +165,14 @@ object HomeAssistantPrefs {
     fun enqueuePresenceRefresh(context: Context, smartspacerId: String) {
         val request = OneTimeWorkRequestBuilder<HomePresenceWorker>()
             .setInputData(workDataOf(HomePresenceWorker.KEY_SMARTSPACER_ID to smartspacerId))
+            // Expedited: Android gewährt diesem Job auch im Doze/Standby ein kurzes Zeitfenster mit
+            // Netzzugriff. Ohne das scheitert der Abruf zur (Cloud-)URL im Ruhezustand meist an DNS,
+            // sodass eine Anwesenheitsänderung unterwegs/nach dem Heimkommen nicht bemerkt wird.
+            // Fällt bei erschöpftem Expedited-Kontingent auf normale Ausführung zurück.
+            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+            .setConstraints(
+                Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
+            )
             .setBackoffCriteria(
                 BackoffPolicy.EXPONENTIAL,
                 WorkRequest.MIN_BACKOFF_MILLIS,
@@ -206,6 +220,38 @@ object HomeAssistantPrefs {
 
     fun cancelPresencePeriodicRefresh(context: Context, smartspacerId: String) {
         WorkManager.getInstance(context).cancelUniqueWork(presencePeriodicWorkName(smartspacerId))
+    }
+
+    // Doze-fester Heartbeat für die Anwesenheits-Bedingung. WorkManager-Periodic wird im
+    // Standby/Doze stark verzögert (Praxistest: >90 Min Lücke beim Heimkommen). AlarmManager mit
+    // setAndAllowWhileIdle feuert dagegen auch im Doze und stößt dann einen expedited Refresh an.
+    // Es gibt keine wiederholende Idle-Variante, daher als Einzel-Alarm, den der Receiver bei jedem
+    // Feuern neu setzt (self-heilend auch aus Setup/isRequirementMet/Worker).
+    private const val HEARTBEAT_REQUEST_CODE = 4711
+    private val HEARTBEAT_INTERVAL_MS = TimeUnit.MINUTES.toMillis(15)
+
+    private fun heartbeatPendingIntent(context: Context): PendingIntent {
+        val intent = Intent(context.applicationContext, PresenceAlarmReceiver::class.java)
+            .setAction(PresenceAlarmReceiver.ACTION_PRESENCE_HEARTBEAT)
+        return PendingIntent.getBroadcast(
+            context.applicationContext,
+            HEARTBEAT_REQUEST_CODE,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+
+    fun schedulePresenceHeartbeat(context: Context) {
+        // Nur sinnvoll, wenn überhaupt eine Anwesenheits-Bedingung registriert ist.
+        if (presenceIds(context).isEmpty()) return
+        val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val triggerAt = System.currentTimeMillis() + HEARTBEAT_INTERVAL_MS
+        am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, heartbeatPendingIntent(context))
+    }
+
+    fun cancelPresenceHeartbeat(context: Context) {
+        val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        am.cancel(heartbeatPendingIntent(context))
     }
 
     // Register der aktiven Anwesenheits-Requirement-IDs. Nötig, weil der Target-Update-Broadcast
