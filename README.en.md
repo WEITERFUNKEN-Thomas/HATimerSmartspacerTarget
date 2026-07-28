@@ -83,10 +83,17 @@ make any Smartspacer target/complication depend on whether you are **home**.
 The condition is **met when the state is `home`**. In Smartspacer it can be **inverted** to express
 "only when I'm **away**".
 
-> **Note on freshness:** Smartspacer only evaluates requirements when the Smartspace becomes visible
-> or a related target refreshes — not on a fixed schedule. Presence is re-fetched from Home
-> Assistant at most about every **2 minutes**. That's plenty for "home/away", but it is not
-> second-by-second live tracking.
+> **Note on freshness:** On its own, Smartspacer only evaluates requirements when the Smartspace
+> becomes visible or a related target refreshes — not on a fixed schedule. So that "home/away" still
+> switches by itself, the plugin refreshes presence **about every 15 minutes** on its own and
+> actively notifies Smartspacer of every change. This keeps working while the phone has been idle
+> for a long time (Doze): the wake-up runs on an alarm that is allowed to fire in that state, and
+> the fetch gets a short networking window with it. On top of that, a value older than **2 minutes**
+> is refreshed when you look at it.
+>
+> A change is therefore picked up **within a few minutes** — not to the second. Live tracking would
+> require a permanently running service with a persistent notification; that is deliberately not
+> included here, to go easy on the battery and on your patience.
 
 ## Notes
 

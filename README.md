@@ -90,10 +90,17 @@ du in Smartspacer beliebige Targets/Complications davon abhängig machen, ob du 
 Die Bedingung ist **erfüllt, wenn der Zustand `home` ist**. In Smartspacer lässt sie sich
 **invertieren**, um „nur wenn ich **unterwegs** bin" abzubilden.
 
-> **Hinweis zur Aktualität:** Bedingungen werden von Smartspacer nur ausgewertet, wenn die
-> Smartspace sichtbar wird oder ein zugehöriges Target aktualisiert — nicht in festem Takt. Die
-> Anwesenheit wird dabei höchstens etwa alle **2 Minuten** neu aus Home Assistant geholt. Für
-> „zuhause/unterwegs" ist das ausreichend, es ist aber kein sekundengenaues Live-Tracking.
+> **Hinweis zur Aktualität:** Smartspacer wertet Bedingungen von sich aus nur aus, wenn die
+> Smartspace sichtbar wird oder ein zugehöriges Target aktualisiert — nicht in festem Takt. Damit
+> „zuhause/unterwegs" trotzdem von allein umschaltet, frischt das Plugin die Anwesenheit **selbst
+> etwa alle 15 Minuten** auf und meldet Smartspacer jede Änderung aktiv. Das funktioniert auch,
+> wenn das Handy längere Zeit ruht (Doze): Der Weckruf läuft über einen Alarm, der im Ruhezustand
+> feuern darf, und der Abruf bekommt dabei ein kurzes Netzwerkfenster. Zusätzlich wird beim
+> Draufschauen nachgeladen, wenn der Wert älter als **2 Minuten** ist.
+>
+> Ein Wechsel wird damit **innerhalb weniger Minuten** erkannt — nicht sekundengenau. Live-Tracking
+> ginge nur mit einem dauerhaft laufenden Dienst samt fester Benachrichtigung; das ist hier
+> bewusst nicht eingebaut, um Akku und Nerven zu schonen.
 
 ## Hinweise
 
