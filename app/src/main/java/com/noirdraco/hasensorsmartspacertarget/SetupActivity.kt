@@ -2,6 +2,7 @@ package com.noirdraco.hasensorsmartspacertarget
 
 import android.app.Activity
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -35,6 +36,7 @@ class SetupActivity : Activity() {
         val baseUrlField = findViewById<EditText>(R.id.input_base_url)
         val tokenField = findViewById<EditText>(R.id.input_token)
         val entityIdField = findViewById<EditText>(R.id.input_entity_id)
+        val showOnlyIfField = findViewById<EditText>(R.id.input_show_only_if)
         val statusView = findViewById<TextView>(R.id.text_status)
         val testButton = findViewById<Button>(R.id.button_test)
 
@@ -44,12 +46,16 @@ class SetupActivity : Activity() {
             findViewById<TextView>(R.id.text_intro).setText(R.string.requirement_setup_intro)
             entityIdField.setHint(R.string.requirement_entity_hint)
             findViewById<TextView>(R.id.text_entity_help).setText(R.string.requirement_entity_help)
+            // Der Anzeige-Filter gilt nur fürs Target — die Bedingung wird in Smartspacer ohnehin
+            // an ein Target gehängt und kann dort invertiert werden.
+            findViewById<View>(R.id.group_show_only_if).visibility = View.GONE
         }
 
         HomeAssistantPrefs.loadSettings(this, smartspacerId)?.let {
             baseUrlField.setText(it.baseUrl)
             tokenField.setText(it.token)
             entityIdField.setText(it.entityId)
+            showOnlyIfField.setText(it.showOnlyIf)
         }
 
         fun currentInput(): SensorSettings? {
@@ -60,7 +66,9 @@ class SetupActivity : Activity() {
                 Toast.makeText(this, R.string.setup_error_empty, Toast.LENGTH_SHORT).show()
                 return null
             }
-            return SensorSettings(baseUrl, token, entityId)
+            // Der Anzeige-Filter ist optional (leer = immer anzeigen) und im Presence-Modus ausgeblendet
+            val showOnlyIf = if (isPresence) "" else showOnlyIfField.text.toString().trim()
+            return SensorSettings(baseUrl, token, entityId, showOnlyIf)
         }
 
         testButton.setOnClickListener {

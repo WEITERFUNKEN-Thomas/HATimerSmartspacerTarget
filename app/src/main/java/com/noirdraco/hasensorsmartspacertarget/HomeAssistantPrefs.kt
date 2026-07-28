@@ -25,7 +25,11 @@ import java.util.concurrent.TimeUnit
 data class SensorSettings(
     val baseUrl: String,
     val token: String,
-    val entityId: String
+    val entityId: String,
+    // Optionaler Anzeige-Filter fürs Target: kommagetrennte Begriffe, von denen einer im Zustand
+    // vorkommen muss (leer = immer anzeigen). Siehe [ShowRule]. Für die Anwesenheits-Bedingung
+    // ohne Bedeutung.
+    val showOnlyIf: String = ""
 )
 
 data class SensorValue(
@@ -85,6 +89,7 @@ object HomeAssistantPrefs {
             .put("baseUrl", settings.baseUrl)
             .put("token", settings.token)
             .put("entityId", settings.entityId)
+            .put("showOnlyIf", settings.showOnlyIf)
         prefs(context).edit { putString(KEY_SETTINGS_PREFIX + smartspacerId, json.toString()) }
     }
 
@@ -95,7 +100,9 @@ object HomeAssistantPrefs {
             SensorSettings(
                 baseUrl = json.getString("baseUrl"),
                 token = json.getString("token"),
-                entityId = json.getString("entityId")
+                entityId = json.getString("entityId"),
+                // optString: Einstellungen, die vor dem Filter gespeichert wurden, haben das Feld nicht
+                showOnlyIf = json.optString("showOnlyIf")
             )
         }.getOrNull()
     }

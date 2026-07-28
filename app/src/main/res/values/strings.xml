@@ -11,6 +11,9 @@
     <string name="setup_token_hint">Token</string>
     <string name="setup_entity_id_label">Entity-ID</string>
     <string name="setup_entity_id_hint">sensor.aussentemperatur</string>
+    <string name="setup_show_only_if_label">Nur anzeigen, wenn der Zustand enthält (optional)</string>
+    <string name="setup_show_only_if_hint">Heute, Morgen</string>
+    <string name="setup_show_only_if_help">Mehrere Begriffe mit Komma trennen — es genügt, wenn einer davon im Zustand vorkommt (Groß-/Kleinschreibung egal). Beispiel: „Heute“ blendet einen Abfallsensor nur am Abholtag ein. Leer lassen = immer anzeigen.</string>
     <string name="setup_save">Speichern</string>
     <string name="setup_error_empty">Bitte alle Felder ausfüllen</string>
     <string name="setup_intro">Trage hier ein, welcher Home Assistant Sensor angezeigt werden soll. Alle drei Werte findest du in Home Assistant.</string>

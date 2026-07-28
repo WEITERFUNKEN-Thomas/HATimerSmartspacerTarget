@@ -49,6 +49,23 @@ Als Symbol wird das Icon des Sensors aus Home Assistant übernommen (aus `icon` 
   Target öffnen und dessen **Einstellungen** aufrufen — die Felder sind mit den gespeicherten
   Werten vorausgefüllt.
 
+### Nur bei bestimmten Zuständen anzeigen (optional)
+
+Manche Sensoren haben **immer** einen Zustand — eine Müllabfuhr-Entität etwa wechselt zwischen
+„Bioabfall Heute" und „Bioabfall in 7 tagen". Ohne Filter stünde das Target dauerhaft im
+Smartspace, obwohl es nur am Abholtag interessiert.
+
+Dafür gibt es auf der Einrichtungsseite das optionale Feld **„Nur anzeigen, wenn der Zustand
+enthält"**:
+
+- Mehrere Begriffe mit **Komma** trennen — es genügt, wenn **einer** davon im Zustand vorkommt.
+- Groß-/Kleinschreibung ist egal, Teiltreffer reichen (`Heute` passt auf „Bioabfall Heute").
+- **Leer lassen** = immer anzeigen (Verhalten wie bisher).
+
+Beispiel: `Heute, Morgen` blendet das Abfall-Target nur am Abholtag und am Tag davor ein — sonst
+verschwindet es komplett aus dem Smartspace. Solange noch kein Wert abgerufen wurde, bleibt das
+Target bei gesetztem Filter ebenfalls ausgeblendet (kein „Lädt …").
+
 ### Mehrere Sensoren
 
 Das Target kann **mehrfach hinzugefügt** werden — jede Instanz hat ihre eigene URL, ihren

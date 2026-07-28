@@ -46,6 +46,22 @@ is taken from the sensor in Home Assistant (from `icon` or `device_class`), othe
 - To **change** the values, open the "Home Assistant Sensor" target in the Smartspacer app under
   **Targets** and open its **settings** — the fields are pre-filled with the saved values.
 
+### Only show for certain states (optional)
+
+Some sensors **always** have a state — a waste collection entity, for example, alternates between
+"Bioabfall Heute" and "Bioabfall in 7 tagen". Without a filter the target would sit in the
+Smartspace permanently, even though it only matters on collection day.
+
+That's what the optional **"Only show when the state contains"** field on the setup screen is for:
+
+- Separate multiple terms with **commas** — **one** of them appearing in the state is enough.
+- Case-insensitive, and partial matches count (`today` matches "Bioabfall Today").
+- **Leave empty** to always show (the previous behaviour).
+
+Example: `today, tomorrow` shows the waste target only on collection day and the day before —
+otherwise it disappears from the Smartspace entirely. While no value has been fetched yet, a
+target with a filter set stays hidden as well (no "Loading …").
+
 ### Multiple sensors
 
 The target can be **added more than once** — each instance has its own URL, its own token and

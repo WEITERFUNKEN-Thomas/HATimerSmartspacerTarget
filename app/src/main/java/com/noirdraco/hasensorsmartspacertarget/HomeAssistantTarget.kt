@@ -23,6 +23,16 @@ class HomeAssistantTarget : SmartspacerTargetProvider() {
         val value = HomeAssistantPrefs.loadLastValue(context, smartspacerId)
         val settings = HomeAssistantPrefs.loadSettings(context, smartspacerId)
 
+        // Anzeige-Filter: Ist einer gesetzt und passt der Zustand nicht, gibt es kein Target —
+        // eine leere Liste blendet es im Smartspace komplett aus. Solange noch kein Wert im Cache
+        // liegt, wird ebenfalls nichts angezeigt: Der Platzhalter „Lädt …“ wäre sonst ein Treffer,
+        // den der Nutzer mit dem Filter ja gerade ausschließen wollte.
+        if (settings != null && ShowRule.isSet(settings.showOnlyIf)) {
+            if (value == null || !ShowRule.matches(value.state, settings.showOnlyIf)) {
+                return emptyList()
+            }
+        }
+
         val title: String
         val subtitle: String
         val iconRes: Int
