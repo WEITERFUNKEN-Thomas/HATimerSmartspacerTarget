@@ -5,10 +5,14 @@ import android.content.Context
 import android.content.Intent
 
 /**
- * Doze-fester Heartbeat für die Anwesenheits-Bedingung. Wird von [HomeAssistantPrefs.schedulePresenceHeartbeat]
- * per AlarmManager (`setAndAllowWhileIdle`) getaktet — anders als WorkManager-Periodic feuert das
- * auch im Standby/Doze. Bei jedem Feuern: alle registrierten Presence-IDs auffrischen (expedited,
- * also mit Netzzugriff) und den nächsten Alarm setzen (die Idle-Variante ist ein Einzel-Alarm).
+ * Doze-fester Heartbeat für Anwesenheits-Bedingungen und Sensor-Targets. Wird von
+ * [HomeAssistantPrefs.scheduleHeartbeat] per AlarmManager (`setAndAllowWhileIdle`) getaktet —
+ * anders als WorkManager-Periodic und der Update-Broadcast von Smartspacer feuert das auch im
+ * Standby/Doze. Bei jedem Feuern: alle registrierten IDs auffrischen (expedited, also mit
+ * Netzzugriff) und den nächsten Alarm setzen (die Idle-Variante ist ein Einzel-Alarm).
+ *
+ * Der Klassenname stammt aus der Zeit, als nur die Anwesenheit daran hing; er bleibt, weil ein
+ * umbenannter Receiver die bereits eingeplanten Alarme ins Leere laufen lassen würde.
  */
 class PresenceAlarmReceiver : BroadcastReceiver() {
 
@@ -16,8 +20,10 @@ class PresenceAlarmReceiver : BroadcastReceiver() {
         if (intent.action != ACTION_PRESENCE_HEARTBEAT) return
         HomeAssistantPrefs.presenceIds(context)
             .forEach { HomeAssistantPrefs.enqueuePresenceRefresh(context, it) }
+        HomeAssistantPrefs.targetIds(context)
+            .forEach { HomeAssistantPrefs.enqueueRefresh(context, it) }
         // Nächsten Heartbeat setzen (setAndAllowWhileIdle wiederholt nicht von selbst).
-        HomeAssistantPrefs.schedulePresenceHeartbeat(context)
+        HomeAssistantPrefs.scheduleHeartbeat(context)
     }
 
     companion object {

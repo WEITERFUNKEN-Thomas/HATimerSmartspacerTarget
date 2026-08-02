@@ -28,7 +28,7 @@ class HomePresenceRequirement : SmartspacerRequirementProvider() {
             // (auch für Instanzen, die vor dieser Änderung eingerichtet wurden) und periodischen
             // Fallback-Takt am Laufen halten (KEEP).
             HomeAssistantPrefs.addPresenceId(context, smartspacerId)
-            HomeAssistantPrefs.schedulePresenceHeartbeat(context)
+            HomeAssistantPrefs.scheduleHeartbeat(context)
             HomeAssistantPrefs.enqueuePresencePeriodicRefresh(context, smartspacerId)
             val stale = value == null ||
                 System.currentTimeMillis() - value.timestamp > REFRESH_THRESHOLD_MS
@@ -56,9 +56,9 @@ class HomePresenceRequirement : SmartspacerRequirementProvider() {
         HomeAssistantPrefs.removePresenceId(context, smartspacerId)
         HomeAssistantPrefs.cancelPresenceRefresh(context, smartspacerId)
         HomeAssistantPrefs.cancelPresencePeriodicRefresh(context, smartspacerId)
-        // War das die letzte Anwesenheits-Bedingung, den Doze-Heartbeat einstellen.
-        if (HomeAssistantPrefs.presenceIds(context).isEmpty()) {
-            HomeAssistantPrefs.cancelPresenceHeartbeat(context)
+        // Hängt nichts mehr am Heartbeat (keine Bedingung, kein Target), den Alarm einstellen.
+        if (HomeAssistantPrefs.hasNothingToRefresh(context)) {
+            HomeAssistantPrefs.cancelHeartbeat(context)
         }
         HomeAssistantPrefs.clear(context, smartspacerId)
     }

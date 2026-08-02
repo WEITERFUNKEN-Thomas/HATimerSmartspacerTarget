@@ -106,11 +106,14 @@ class SetupActivity : Activity() {
                 HomeAssistantPrefs.addPresenceId(this, smartspacerId)
                 HomeAssistantPrefs.enqueuePresenceRefresh(this, smartspacerId)
                 // Doze-fester Heartbeat (AlarmManager) — primärer autonomer Takt im Standby
-                HomeAssistantPrefs.schedulePresenceHeartbeat(this)
+                HomeAssistantPrefs.scheduleHeartbeat(this)
                 // Zusätzlich unabhängiger periodischer Fallback-Takt
                 HomeAssistantPrefs.enqueuePresencePeriodicRefresh(this, smartspacerId)
             } else {
+                // Fürs Auffrischen per Doze-Heartbeat registrieren, bevor der Alarm gesetzt wird
+                HomeAssistantPrefs.addTargetId(this, smartspacerId)
                 HomeAssistantPrefs.enqueueRefresh(this, smartspacerId)
+                HomeAssistantPrefs.scheduleHeartbeat(this)
             }
             setResult(RESULT_OK)
             finish()

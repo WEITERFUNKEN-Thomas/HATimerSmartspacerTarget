@@ -145,6 +145,14 @@ object HomeAssistantPrefs {
     fun enqueueRefresh(context: Context, smartspacerId: String) {
         val request = OneTimeWorkRequestBuilder<HomeAssistantWorker>()
             .setInputData(workDataOf(HomeAssistantWorker.KEY_SMARTSPACER_ID to smartspacerId))
+            // Expedited + Netz-Constraint aus demselben Grund wie beim Anwesenheits-Refresh: im
+            // Doze ist ohne dieses kurze Netzfenster kein DNS möglich, der Abruf scheitert und der
+            // Cache bleibt auf dem Zustand von gestern stehen. Bei gesetztem Anzeige-Filter fällt
+            // das doppelt auf — ein veralteter Zustand heißt dann „Target gar nicht sichtbar“.
+            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+            .setConstraints(
+                Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
+            )
             .setBackoffCriteria(
                 BackoffPolicy.EXPONENTIAL,
                 WorkRequest.MIN_BACKOFF_MILLIS,
@@ -229,11 +237,12 @@ object HomeAssistantPrefs {
         WorkManager.getInstance(context).cancelUniqueWork(presencePeriodicWorkName(smartspacerId))
     }
 
-    // Doze-fester Heartbeat für die Anwesenheits-Bedingung. WorkManager-Periodic wird im
-    // Standby/Doze stark verzögert (Praxistest: >90 Min Lücke beim Heimkommen). AlarmManager mit
+    // Doze-fester Heartbeat für Anwesenheits-Bedingungen *und* Sensor-Targets. Weder
+    // WorkManager-Periodic noch der Update-Broadcast von Smartspacer sind im Standby/Doze
+    // verlässlich (Praxistest Anwesenheit: >90 Min Lücke beim Heimkommen). AlarmManager mit
     // setAndAllowWhileIdle feuert dagegen auch im Doze und stößt dann einen expedited Refresh an.
     // Es gibt keine wiederholende Idle-Variante, daher als Einzel-Alarm, den der Receiver bei jedem
-    // Feuern neu setzt (self-heilend auch aus Setup/isRequirementMet/Worker).
+    // Feuern neu setzt (self-heilend auch aus Setup und jedem Worker-Lauf).
     private const val HEARTBEAT_REQUEST_CODE = 4711
     private val HEARTBEAT_INTERVAL_MS = TimeUnit.MINUTES.toMillis(15)
 
@@ -248,36 +257,64 @@ object HomeAssistantPrefs {
         )
     }
 
-    fun schedulePresenceHeartbeat(context: Context) {
-        // Nur sinnvoll, wenn überhaupt eine Anwesenheits-Bedingung registriert ist.
-        if (presenceIds(context).isEmpty()) return
+    fun scheduleHeartbeat(context: Context) {
+        // Nur sinnvoll, wenn überhaupt etwas aufzufrischen ist.
+        if (presenceIds(context).isEmpty() && targetIds(context).isEmpty()) return
         val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val triggerAt = System.currentTimeMillis() + HEARTBEAT_INTERVAL_MS
         am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, heartbeatPendingIntent(context))
     }
 
-    fun cancelPresenceHeartbeat(context: Context) {
+    fun cancelHeartbeat(context: Context) {
         val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         am.cancel(heartbeatPendingIntent(context))
     }
 
+    /** `true`, wenn weder eine Bedingung noch ein Target registriert ist — dann kann der Alarm weg. */
+    fun hasNothingToRefresh(context: Context): Boolean =
+        presenceIds(context).isEmpty() && targetIds(context).isEmpty()
+
     // Register der aktiven Anwesenheits-Requirement-IDs. Nötig, weil der Target-Update-Broadcast
-    // (der zuverlässige, von Smartspacer getaktete Auslöser) nur Target-IDs kennt — so können wir
-    // beim selben Weckruf auch die Requirements auffrischen. Als \n-getrennter String abgelegt
-    // (IDs sind UUIDs), um StringSet-Eigenheiten von EncryptedSharedPreferences zu vermeiden.
+    // (der von Smartspacer getaktete Auslöser) nur Target-IDs kennt — so können wir beim selben
+    // Weckruf auch die Requirements auffrischen. Als \n-getrennter String abgelegt (IDs sind UUIDs),
+    // um StringSet-Eigenheiten von EncryptedSharedPreferences zu vermeiden.
     private const val KEY_PRESENCE_IDS = "presence_ids"
 
-    fun presenceIds(context: Context): Set<String> =
-        prefs(context).getString(KEY_PRESENCE_IDS, null)
+    // Dasselbe für die Sensor-Targets: Der Doze-Heartbeat läuft außerhalb von Smartspacer und
+    // erfährt sonst nicht, welche Targets es überhaupt gibt.
+    private const val KEY_TARGET_IDS = "target_ids"
+
+    fun presenceIds(context: Context): Set<String> = ids(context, KEY_PRESENCE_IDS)
+
+    fun addPresenceId(context: Context, smartspacerId: String) =
+        addId(context, KEY_PRESENCE_IDS, smartspacerId)
+
+    fun removePresenceId(context: Context, smartspacerId: String) =
+        removeId(context, KEY_PRESENCE_IDS, smartspacerId)
+
+    fun targetIds(context: Context): Set<String> = ids(context, KEY_TARGET_IDS)
+
+    fun addTargetId(context: Context, smartspacerId: String) =
+        addId(context, KEY_TARGET_IDS, smartspacerId)
+
+    fun removeTargetId(context: Context, smartspacerId: String) =
+        removeId(context, KEY_TARGET_IDS, smartspacerId)
+
+    private fun ids(context: Context, key: String): Set<String> =
+        prefs(context).getString(key, null)
             ?.split("\n")?.filter { it.isNotBlank() }?.toSet() ?: emptySet()
 
-    fun addPresenceId(context: Context, smartspacerId: String) {
-        val ids = presenceIds(context).toMutableSet().apply { add(smartspacerId) }
-        prefs(context).edit { putString(KEY_PRESENCE_IDS, ids.joinToString("\n")) }
+    private fun addId(context: Context, key: String, smartspacerId: String) {
+        val ids = ids(context, key)
+        // Die Provider melden sich bei jeder Auswertung selbstheilend an — steht die ID schon drin,
+        // gar nicht erst schreiben.
+        if (smartspacerId in ids) return
+        prefs(context).edit { putString(key, (ids + smartspacerId).joinToString("\n")) }
     }
 
-    fun removePresenceId(context: Context, smartspacerId: String) {
-        val ids = presenceIds(context).toMutableSet().apply { remove(smartspacerId) }
-        prefs(context).edit { putString(KEY_PRESENCE_IDS, ids.joinToString("\n")) }
+    private fun removeId(context: Context, key: String, smartspacerId: String) {
+        val ids = ids(context, key)
+        if (smartspacerId !in ids) return
+        prefs(context).edit { putString(key, (ids - smartspacerId).joinToString("\n")) }
     }
 }

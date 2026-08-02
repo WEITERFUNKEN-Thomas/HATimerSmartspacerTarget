@@ -36,7 +36,7 @@ class HomePresenceWorker(
 
         // Selbstheilung: sicherstellen, dass der Doze-Heartbeat gesetzt ist (u. a. nach Reboot, wenn
         // WorkManager den periodischen Fallback wiederherstellt und diesen Worker startet).
-        HomeAssistantPrefs.schedulePresenceHeartbeat(applicationContext)
+        HomeAssistantPrefs.scheduleHeartbeat(applicationContext)
 
         return when (val result = withContext(Dispatchers.IO) { HomeAssistantApi.fetch(settings) }) {
             is FetchResult.Success -> {

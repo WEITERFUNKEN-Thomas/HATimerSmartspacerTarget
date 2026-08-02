@@ -23,6 +23,10 @@ class HomeAssistantTarget : SmartspacerTargetProvider() {
         val value = HomeAssistantPrefs.loadLastValue(context, smartspacerId)
         val settings = HomeAssistantPrefs.loadSettings(context, smartspacerId)
 
+        // Selbstheilung: fürs Auffrischen per Doze-Heartbeat registrieren (auch für Targets, die
+        // vor dieser Änderung eingerichtet wurden). Schreibt nur, wenn die ID noch fehlt.
+        if (settings != null) HomeAssistantPrefs.addTargetId(context, smartspacerId)
+
         // Anzeige-Filter: Ist einer gesetzt und passt der Zustand nicht, gibt es kein Target —
         // eine leere Liste blendet es im Smartspace komplett aus. Solange noch kein Wert im Cache
         // liegt, wird ebenfalls nichts angezeigt: Der Platzhalter „Lädt …“ wäre sonst ein Treffer,
@@ -109,6 +113,11 @@ class HomeAssistantTarget : SmartspacerTargetProvider() {
     override fun onProviderRemoved(smartspacerId: String) {
         val context = provideContext()
         HomeAssistantPrefs.cancelRefresh(context, smartspacerId)
+        HomeAssistantPrefs.removeTargetId(context, smartspacerId)
+        // Hängt nichts mehr am Heartbeat (kein Target, keine Bedingung), den Alarm einstellen.
+        if (HomeAssistantPrefs.hasNothingToRefresh(context)) {
+            HomeAssistantPrefs.cancelHeartbeat(context)
+        }
         HomeAssistantPrefs.clear(context, smartspacerId)
     }
 

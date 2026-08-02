@@ -28,6 +28,10 @@ class HomeAssistantWorker(
             val settings = HomeAssistantPrefs.loadSettings(applicationContext, smartspacerId)
                 ?: return Result.failure()
 
+            // Selbstheilung: sicherstellen, dass der Doze-Heartbeat gesetzt ist (u. a. nach einem
+            // Neustart, der eingeplante Alarme verwirft).
+            HomeAssistantPrefs.scheduleHeartbeat(applicationContext)
+
             return when (val result = withContext(Dispatchers.IO) { HomeAssistantApi.fetch(settings) }) {
                 is FetchResult.Success -> {
                     handleSuccess(smartspacerId, result.value)
