@@ -23,6 +23,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "HA Sensor Smartspacer Target"
+rootProject.name = "HA Timer Smartspacer Target"
 include(":app")
  

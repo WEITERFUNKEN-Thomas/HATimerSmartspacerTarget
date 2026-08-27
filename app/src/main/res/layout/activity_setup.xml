@@ -96,37 +96,28 @@
             android:textColor="?android:attr/textColorSecondary"
             android:textSize="12sp" />
 
-        <!-- Nur im Sensor-Modus sichtbar; die Anwesenheits-Bedingung kennt keinen Anzeige-Filter -->
-        <LinearLayout
-            android:id="@+id/group_show_only_if"
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/setup_remain_label"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/input_remain_minutes"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:hint="@string/setup_remain_hint"
+            android:importantForAutofill="no"
+            android:inputType="number"
+            android:maxLines="1" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="@string/setup_show_only_if_label"
-                android:textStyle="bold" />
-
-            <EditText
-                android:id="@+id/input_show_only_if"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/setup_show_only_if_hint"
-                android:importantForAutofill="no"
-                android:inputType="text"
-                android:maxLines="1" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/setup_show_only_if_help"
-                android:textColor="?android:attr/textColorSecondary"
-                android:textSize="12sp" />
-
-        </LinearLayout>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/setup_remain_help"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="12sp" />
 
         <TextView
             android:layout_width="match_parent"

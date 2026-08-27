@@ -1,4 +1,4 @@
-package com.noirdraco.hasensorsmartspacertarget
+package com.noirdraco.hatimersmartspacertarget
 
 import android.content.Context
 import androidx.work.CoroutineWorker
@@ -7,7 +7,7 @@ import com.kieronquinn.app.smartspacer.sdk.provider.SmartspacerTargetProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class HomeAssistantWorker(
+class TimerWorker(
     appContext: Context,
     params: WorkerParameters
 ) : CoroutineWorker(appContext, params) {
@@ -15,26 +15,27 @@ class HomeAssistantWorker(
     companion object {
         const val KEY_SMARTSPACER_ID = "smartspacer_id"
 
-        // Nach so vielen vergeblichen Versuchen aufgeben (bis zum nächsten periodischen Refresh)
+        // Nach so vielen vergeblichen Versuchen aufgeben (bis zum nächsten Heartbeat)
         private const val MAX_ATTEMPTS = 4
-
-        // HA-Zustände, die "kein echter Wert" bedeuten
-        private val UNAVAILABLE_STATES = setOf("unavailable", "unknown", "none", "")
     }
 
     override suspend fun doWork(): Result {
         val smartspacerId = inputData.getString(KEY_SMARTSPACER_ID) ?: return Result.failure()
         try {
-            val settings = HomeAssistantPrefs.loadSettings(applicationContext, smartspacerId)
+            val settings = TimerPrefs.loadSettings(applicationContext, smartspacerId)
                 ?: return Result.failure()
 
             // Selbstheilung: sicherstellen, dass der Doze-Heartbeat gesetzt ist (u. a. nach einem
             // Neustart, der eingeplante Alarme verwirft).
-            HomeAssistantPrefs.scheduleHeartbeat(applicationContext)
+            TimerPrefs.scheduleHeartbeat(applicationContext)
 
             return when (val result = withContext(Dispatchers.IO) { HomeAssistantApi.fetch(settings) }) {
                 is FetchResult.Success -> {
-                    handleSuccess(smartspacerId, result.value)
+                    // Anders als bei einer reinen Wertanzeige wird „unavailable“/„unknown“ hier
+                    // *übernommen* statt den alten Wert zu behalten: Genau daran erkennen wir, dass
+                    // das Gerät aus ist und der Timer verschwinden soll. Ein alter Zielzeitpunkt
+                    // würde sonst als Countdown weiterlaufen.
+                    TimerPrefs.saveLastValue(applicationContext, smartspacerId, result.value)
                     Result.success()
                 }
                 // Dauerhafter Fehler (falscher Token/Entity) — letzten Wert stehen lassen, nicht wiederholen
@@ -45,18 +46,8 @@ class HomeAssistantWorker(
             }
         } finally {
             SmartspacerTargetProvider.notifyChange(
-                applicationContext, HomeAssistantTarget::class.java, smartspacerId
+                applicationContext, TimerTarget::class.java, smartspacerId
             )
         }
-    }
-
-    private fun handleSuccess(smartspacerId: String, value: SensorValue) {
-        val isUnavailable = value.state.trim().lowercase() in UNAVAILABLE_STATES
-        // Wenn der Sensor gerade nicht verfügbar ist, aber schon ein guter Wert im Cache liegt,
-        // den alten Wert behalten statt "unavailable" anzuzeigen.
-        if (isUnavailable && HomeAssistantPrefs.loadLastValue(applicationContext, smartspacerId) != null) {
-            return
-        }
-        HomeAssistantPrefs.saveLastValue(applicationContext, smartspacerId, value)
     }
 }

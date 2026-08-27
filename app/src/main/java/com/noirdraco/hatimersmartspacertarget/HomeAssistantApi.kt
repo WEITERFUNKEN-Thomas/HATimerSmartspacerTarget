@@ -1,4 +1,4 @@
-package com.noirdraco.hasensorsmartspacertarget
+package com.noirdraco.hatimersmartspacertarget
 
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -27,7 +27,7 @@ object HomeAssistantApi {
         .readTimeout(10, TimeUnit.SECONDS)
         .build()
 
-    fun fetch(settings: SensorSettings): FetchResult {
+    fun fetch(settings: TimerSettings): FetchResult {
         val url = settings.baseUrl.trimEnd('/') + "/api/states/" + settings.entityId
         val request = Request.Builder()
             .url(url)

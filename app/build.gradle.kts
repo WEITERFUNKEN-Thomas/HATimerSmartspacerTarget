@@ -3,13 +3,13 @@ plugins {
 }
 
 android {
-    namespace = "com.noirdraco.hasensorsmartspacertarget"
+    namespace = "com.noirdraco.hatimersmartspacertarget"
     compileSdk {
         version = release(37)
     }
 
     defaultConfig {
-        applicationId = "com.noirdraco.hasensorsmartspacertarget"
+        applicationId = "com.noirdraco.hatimersmartspacertarget"
         minSdk = 37
         targetSdk = 37
         versionCode = 1

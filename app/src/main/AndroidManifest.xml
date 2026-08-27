@@ -19,15 +19,15 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.HASensorSmartspacerTarget">
+        android:theme="@style/Theme.HATimerSmartspacerTarget">
         <activity
             android:name=".SetupActivity"
             android:exported="true"
             android:label="@string/setup_title" />
 
         <provider
-            android:name=".HomeAssistantTarget"
-            android:authorities="${applicationId}.target.homeassistant"
+            android:name=".TimerTarget"
+            android:authorities="${applicationId}.target.hatimer"
             android:permission="com.kieronquinn.app.smartspacer.permission.ACCESS_SMARTSPACER_TARGETS"
             android:exported="true">
             <intent-filter>
@@ -35,22 +35,12 @@
             </intent-filter>
         </provider>
 
-        <provider
-            android:name=".HomePresenceRequirement"
-            android:authorities="${applicationId}.requirement.homepresence"
-            android:permission="com.kieronquinn.app.smartspacer.permission.ACCESS_SMARTSPACER_REQUIREMENTS"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="com.kieronquinn.app.smartspacer.REQUIREMENT" />
-            </intent-filter>
-        </provider>
-
         <receiver
-            android:name=".PresenceAlarmReceiver"
+            android:name=".TimerAlarmReceiver"
             android:exported="false" />
 
         <receiver
-            android:name=".HomeAssistantUpdateReceiver"
+            android:name=".TimerUpdateReceiver"
             android:exported="true"
             android:permission="com.kieronquinn.app.smartspacer.permission.SEND_UPDATE_BROADCAST">
             <intent-filter>

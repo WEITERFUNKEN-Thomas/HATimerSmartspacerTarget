@@ -1,35 +1,31 @@
 <resources>
-    <string name="app_name">HA Sensor Smartspacer Target</string>
-    <string name="target_label">Home Assistant Sensor</string>
-    <string name="target_description">Zeigt einen Home Assistant Sensorwert</string>
-    <string name="target_loading">Lädt …</string>
-    <string name="target_unavailable">Nicht verfügbar</string>
-    <string name="setup_title">Home Assistant Sensor einrichten</string>
+    <string name="app_name">HA Timer Smartspacer Target</string>
+    <string name="target_label">Home Assistant Timer</string>
+    <string name="target_description">Zeigt die Restzeit eines Home-Assistant-Sensors als laufenden Countdown</string>
+    <string name="target_finished">Fertig</string>
+    <string name="target_ready_at">fertig um %1$s</string>
+    <string name="target_setup_needed">Zum Einrichten tippen</string>
+    <string name="setup_title">Home Assistant Timer einrichten</string>
     <string name="setup_base_url_label">Home Assistant Base-URL</string>
     <string name="setup_base_url_hint">https://homeassistant.local:8123</string>
     <string name="setup_token_label">Long-Lived Access Token</string>
     <string name="setup_token_hint">Token</string>
     <string name="setup_entity_id_label">Entity-ID</string>
-    <string name="setup_entity_id_hint">sensor.aussentemperatur</string>
-    <string name="setup_show_only_if_label">Nur anzeigen, wenn der Zustand enthält (optional)</string>
-    <string name="setup_show_only_if_hint">Heute, Morgen</string>
-    <string name="setup_show_only_if_help">Mehrere Begriffe mit Komma trennen — es genügt, wenn einer davon im Zustand vorkommt (Groß-/Kleinschreibung egal). Beispiel: „Heute“ blendet einen Abfallsensor nur am Abholtag ein. Leer lassen = immer anzeigen.</string>
+    <string name="setup_entity_id_hint">sensor.waschmaschine_fertigstellungszeit</string>
+    <string name="setup_remain_label">Nach Ablauf noch anzeigen (Minuten)</string>
+    <string name="setup_remain_hint">30</string>
+    <string name="setup_remain_help">So lange bleibt nach Ablauf noch „Fertig“ stehen, danach verschwindet die Anzeige von selbst. 0 = sofort ausblenden.</string>
     <string name="setup_save">Speichern</string>
     <string name="setup_error_empty">Bitte alle Felder ausfüllen</string>
-    <string name="setup_intro">Trage hier ein, welcher Home Assistant Sensor angezeigt werden soll. Alle drei Werte findest du in Home Assistant.</string>
+    <string name="setup_intro">Trage hier ein, welcher Home Assistant Sensor die Zielzeit liefert. Alle drei Werte findest du in Home Assistant.</string>
     <string name="setup_base_url_help">Die Adresse, unter der du Home Assistant im Browser öffnest — ohne Pfad und ohne / am Ende.</string>
     <string name="setup_token_help">In Home Assistant: unten links auf deinen Benutzernamen tippen → Tab „Sicherheit“ → ganz unten „Langlebige Zugangstoken“ → „Token erstellen“. Der Token wird nur einmal angezeigt — direkt kopieren.</string>
-    <string name="setup_entity_id_help">In Home Assistant unter „Entwicklerwerkzeuge → Zustände“ den Sensor suchen — die Entity-ID steht in der ersten Spalte.</string>
+    <string name="setup_entity_id_help">In Home Assistant unter „Entwicklerwerkzeuge → Zustände“ den Sensor suchen — die Entity-ID steht in der ersten Spalte. Zwei Arten von Sensoren funktionieren: solche mit einem Zeitpunkt (z. B. die Fertigstellungszeit der Waschmaschine) und solche mit einer Restzeit als Zahl. Bei einer Zahl ohne Einheit werden Minuten angenommen.</string>
     <string name="setup_cleartext_hint">Tipp: Nur lokale Adressen wie http://homeassistant.local:8123 oder http://192.168.x.x:8123 nutzen unverschlüsseltes HTTP. Extern (z. B. Nabu Casa) immer https verwenden.</string>
     <string name="setup_test">Verbindung testen</string>
     <string name="setup_test_running">Teste Verbindung …</string>
-    <string name="setup_test_ok">✓ %1$s: %2$s</string>
+    <string name="setup_test_ok">✓ %1$s: noch %2$d Minuten</string>
+    <string name="setup_test_no_time">✗ %1$s liefert „%2$s“ — daraus lässt sich keine Zeit lesen. Der Sensor braucht einen Zeitpunkt oder eine Restzeit als Zahl.</string>
     <string name="setup_test_http">✗ Fehler vom Server (HTTP %1$d). Token oder Entity-ID prüfen.</string>
     <string name="setup_test_network">✗ Keine Verbindung: %1$s. URL und Netzwerk prüfen.</string>
-    <string name="requirement_label">Home Assistant: Zuhause</string>
-    <string name="requirement_description">Bedingung erfüllt, wenn deine Anwesenheit in Home Assistant „home“ ist</string>
-    <string name="requirement_setup_title">Anwesenheit einrichten</string>
-    <string name="requirement_setup_intro">Trage ein, welche Anwesenheits-Entität aus Home Assistant geprüft werden soll. Die Bedingung ist erfüllt, wenn ihr Zustand „home“ ist (invertierbar in Smartspacer, z. B. für „unterwegs“).</string>
-    <string name="requirement_entity_hint">person.thomas</string>
-    <string name="requirement_entity_help">In Home Assistant unter „Entwicklerwerkzeuge → Zustände“ die Entität suchen, die deine Anwesenheit abbildet — meist „person.…“ oder „device_tracker.…“. Zustand „home“ = zuhause.</string>
 </resources>
