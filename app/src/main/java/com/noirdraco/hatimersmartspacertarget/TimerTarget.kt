@@ -49,6 +49,13 @@ class TimerTarget : SmartspacerTargetProvider() {
         // Selbstheilung: fürs Auffrischen per Doze-Heartbeat registrieren. Schreibt nur, wenn die
         // ID noch fehlt — diese Methode wird sehr oft gerufen.
         TimerPrefs.addTargetId(context, smartspacerId)
+        // Ebenfalls selbstheilend, und hier genau richtig aufgehoben: Diese Methode ist der einzige
+        // Pfad, der nach einem Neustart verlässlich läuft — Smartspacer fragt den ContentProvider
+        // ab, sobald der Smartspace gezeichnet wird. Beides zusammen schließt die Lücke: Der Anker
+        // bringt den Takt über Neustarts, der Heartbeat ist der einzige, der im Doze feuert — und
+        // er wird hier nur gesetzt, wenn er fehlt, sonst schöbe ihn jede Abfrage nach hinten.
+        TimerPrefs.ensureAnchor(context)
+        TimerPrefs.scheduleHeartbeatIfMissing(context)
 
         val value = TimerPrefs.loadLastValue(context, smartspacerId)
         val now = System.currentTimeMillis()
@@ -195,9 +202,10 @@ class TimerTarget : SmartspacerTargetProvider() {
         val context = provideContext()
         TimerPrefs.cancelRefresh(context, smartspacerId)
         TimerPrefs.removeTargetId(context, smartspacerId)
-        // Hängt kein Timer mehr am Heartbeat, den Alarm einstellen.
+        // Hängt kein Timer mehr daran, Takt und Anker einstellen.
         if (TimerPrefs.targetIds(context).isEmpty()) {
             TimerPrefs.cancelHeartbeat(context)
+            TimerPrefs.cancelAnchor(context)
         }
         TimerPrefs.clear(context, smartspacerId)
     }

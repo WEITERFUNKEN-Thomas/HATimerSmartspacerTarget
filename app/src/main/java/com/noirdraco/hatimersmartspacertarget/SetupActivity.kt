@@ -80,6 +80,8 @@ class SetupActivity : Activity() {
             // Sofort abrufen, damit der Countdown nicht erst beim nächsten Heartbeat erscheint
             TimerPrefs.enqueueRefresh(this, smartspacerId)
             TimerPrefs.scheduleHeartbeat(this)
+            // Der neustartfeste Anker, der den Heartbeat nach einem Boot wieder in Gang setzt
+            TimerPrefs.enqueueAnchor(this)
             setResult(RESULT_OK)
             finish()
         }

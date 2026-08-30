@@ -10,10 +10,12 @@ import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
+import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkRequest
 import androidx.work.workDataOf
@@ -176,28 +178,86 @@ object TimerPrefs {
         WorkManager.getInstance(context).cancelUniqueWork(workName(smartspacerId))
     }
 
+    // Neustartfester Anker der ganzen Auffrischung. Der AlarmManager-Heartbeat unten ist der
+    // eigentliche Takt, aber Alarme sind nach einem Neustart weg — und nachgezogen werden sie nur
+    // aus einem Worker-Lauf, den nach dem Boot niemand einplant. Periodische Arbeit liegt dagegen
+    // in der WorkManager-Datenbank und wird nach Neustart bzw. Force-Stop von selbst wieder
+    // eingeplant. Siehe [TimerAnchorWorker], dort steht die vollstaendige Begruendung.
+    //
+    // Global statt pro smartspacerId: Der Anker frischt — wie [TimerAlarmReceiver] — schlicht alle
+    // registrierten Targets auf, ein einziger Auftrag genuegt also.
+    private const val ANCHOR_WORK_NAME = "ha_timer_anchor"
+    private const val ANCHOR_INTERVAL_MINUTES = 15L
+
+    // Einmal pro Prozessleben genuegt: Genau die Ereignisse, die den Anker verlieren koennen
+    // (Neustart, Force-Stop, Daten geloescht), starten den Prozess ohnehin neu. Ohne diese Sperre
+    // wuerde jede Smartspacer-Abfrage eine Datenbank-Transaktion ausloesen, und die kommen oft.
+    @Volatile
+    private var anchorEnsured = false
+
+    /**
+     * Plant den Anker ein. [ExistingPeriodicWorkPolicy.KEEP], damit wiederholte Aufrufe den
+     * 15-Minuten-Takt nicht staendig zuruecksetzen.
+     *
+     * Bewusst **ohne** Netz-Bedingung, anders als [enqueueRefresh]: Der Anker ruft selbst nichts ab.
+     * Seine Aufgabe ist, den Heartbeat zu setzen — und das muss auch dann gelingen, wenn gerade kein
+     * Netz da ist, sonst haengt die Erholung am Netz statt am Takt.
+     */
+    fun enqueueAnchor(context: Context) {
+        val request = PeriodicWorkRequestBuilder<TimerAnchorWorker>(
+            ANCHOR_INTERVAL_MINUTES, TimeUnit.MINUTES
+        ).build()
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            ANCHOR_WORK_NAME,
+            ExistingPeriodicWorkPolicy.KEEP,
+            request
+        )
+        anchorEnsured = true
+    }
+
+    /** Selbstheilender Aufruf fuer heisse Pfade — tut nach dem ersten Mal je Prozess nichts mehr. */
+    fun ensureAnchor(context: Context) {
+        if (anchorEnsured) return
+        enqueueAnchor(context)
+    }
+
+    fun cancelAnchor(context: Context) {
+        anchorEnsured = false
+        WorkManager.getInstance(context).cancelUniqueWork(ANCHOR_WORK_NAME)
+    }
+
     // Doze-fester Heartbeat. Weder WorkManager-Periodic noch der Update-Broadcast von Smartspacer
     // sind im Standby/Doze verlässlich; AlarmManager mit setAndAllowWhileIdle feuert dagegen auch
     // im Doze und stößt dann einen expedited Refresh an. Es gibt keine wiederholende Idle-Variante,
     // daher als Einzel-Alarm, den der Receiver bei jedem Feuern neu setzt (selbstheilend auch aus
     // dem Setup und jedem Worker-Lauf, deshalb braucht es keinen BOOT_COMPLETED-Receiver).
     //
-    // Der laufende Countdown selbst hängt *nicht* daran: Er zählt im Host-Prozess herunter (siehe
-    // [TimerTarget]). Der Heartbeat sorgt nur dafür, dass wir mitbekommen, wenn Home Assistant eine
-    // neue Zielzeit setzt oder das Gerät ausgeschaltet wird.
+    // Die Anzeige selbst hängt *nicht* daran: Gezeigt wird ein fester Zielzeitpunkt, der nicht
+    // veralten kann (siehe [TimerTarget]). Der Heartbeat sorgt nur dafür, dass wir mitbekommen,
+    // wenn Home Assistant eine neue Zielzeit setzt oder das Gerät ausgeschaltet wird.
     private const val HEARTBEAT_REQUEST_CODE = 4711
     private val HEARTBEAT_INTERVAL_MS = TimeUnit.MINUTES.toMillis(15)
 
-    private fun heartbeatPendingIntent(context: Context): PendingIntent {
-        val intent = Intent(context.applicationContext, TimerAlarmReceiver::class.java)
+    private fun heartbeatIntent(context: Context) =
+        Intent(context.applicationContext, TimerAlarmReceiver::class.java)
             .setAction(TimerAlarmReceiver.ACTION_TIMER_HEARTBEAT)
-        return PendingIntent.getBroadcast(
+
+    private fun heartbeatPendingIntent(context: Context): PendingIntent =
+        PendingIntent.getBroadcast(
             context.applicationContext,
             HEARTBEAT_REQUEST_CODE,
-            intent,
+            heartbeatIntent(context),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-    }
+
+    /** `null`, wenn gerade kein Heartbeat eingeplant ist — FLAG_NO_CREATE legt keinen neuen an. */
+    private fun existingHeartbeatPendingIntent(context: Context): PendingIntent? =
+        PendingIntent.getBroadcast(
+            context.applicationContext,
+            HEARTBEAT_REQUEST_CODE,
+            heartbeatIntent(context),
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+        )
 
     fun scheduleHeartbeat(context: Context) {
         // Nur sinnvoll, wenn überhaupt ein Target existiert.
@@ -205,6 +265,23 @@ object TimerPrefs {
         val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val triggerAt = System.currentTimeMillis() + HEARTBEAT_INTERVAL_MS
         am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, heartbeatPendingIntent(context))
+    }
+
+    /**
+     * Setzt den Heartbeat nur, wenn gerade keiner eingeplant ist — fuer heisse Pfade wie
+     * [TimerTarget.getSmartspaceTargets].
+     *
+     * [scheduleHeartbeat] dort direkt aufzurufen waere falsch: Das schoebe den Alarm bei *jeder*
+     * Abfrage auf „jetzt + 15 Minuten“, er kaeme bei aktiver Nutzung also nie zum Feuern.
+     *
+     * Die Pruefung greift genau in den beiden Faellen, um die es geht: Nach einem Neustart und nach
+     * einem Force-Stop sind die PendingIntents der App weg, FLAG_NO_CREATE liefert dann `null`. Das
+     * ist wichtig, weil der [TimerAnchorWorker] als gewoehnliche periodische Arbeit im Doze
+     * verzoegert werden kann — der doze-feste Alarm darf nicht darauf warten muessen.
+     */
+    fun scheduleHeartbeatIfMissing(context: Context) {
+        if (existingHeartbeatPendingIntent(context) != null) return
+        scheduleHeartbeat(context)
     }
 
     fun cancelHeartbeat(context: Context) {
