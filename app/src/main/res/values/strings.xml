@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">HA Timer Smartspacer Target</string>
     <string name="target_label">Home Assistant Timer</string>
-    <string name="target_description">Zeigt die Restzeit eines Home-Assistant-Sensors als laufenden Countdown</string>
+    <string name="target_description">Zeigt, wann ein Home-Assistant-Sensor fertig wird</string>
     <string name="target_finished">Fertig</string>
     <string name="target_ready_at">fertig um %1$s</string>
     <string name="target_setup_needed">Zum Einrichten tippen</string>
