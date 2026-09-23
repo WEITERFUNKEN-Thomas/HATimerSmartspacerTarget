@@ -67,6 +67,9 @@ class SetupActivity : Activity() {
                         is FetchResult.NetworkError -> getString(
                             R.string.setup_test_network, result.message
                         )
+                        is FetchResult.ConfigError -> getString(
+                            R.string.setup_test_config, result.message
+                        )
                     }
                 }
             }.start()
@@ -92,10 +95,14 @@ class SetupActivity : Activity() {
      * wird — genau daran scheitert die Einrichtung sonst still (Sensor antwortet, taugt aber nicht).
      */
     private fun testResultText(value: SensorValue): String {
-        val endTime = Countdown.parseEndTime(value.state, value.unit, value.timestamp)
-        val remainingMinutes = endTime
-            ?.let { (it - System.currentTimeMillis()) / 60_000L }
+        val endTime = value.endTimeMs
             ?: return getString(R.string.setup_test_no_time, value.friendlyName, value.state)
+        val remainingMinutes = (endTime - System.currentTimeMillis()) / 60_000L
+        // Ein Zeitstempel-Sensor nach dem Durchlauf: taugt, zeigt aber gerade nichts an. Früher
+        // stand hier „noch -120 Minuten“.
+        if (remainingMinutes < 0) {
+            return getString(R.string.setup_test_past, value.friendlyName)
+        }
         return getString(R.string.setup_test_ok, value.friendlyName, remainingMinutes)
     }
 }

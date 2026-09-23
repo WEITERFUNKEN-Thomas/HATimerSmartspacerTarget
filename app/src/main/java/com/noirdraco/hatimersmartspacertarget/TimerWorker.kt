@@ -35,14 +35,26 @@ class TimerWorker(
                     // *übernommen* statt den alten Wert zu behalten: Genau daran erkennen wir, dass
                     // das Gerät aus ist und der Timer verschwinden soll. Ein alter Zielzeitpunkt
                     // würde sonst als Countdown weiterlaufen.
-                    TimerPrefs.saveLastValue(applicationContext, smartspacerId, result.value)
+                    val value = result.value
+                    val previousEnd =
+                        TimerPrefs.loadLastValue(applicationContext, smartspacerId)?.endTimeMs
+                    TimerPrefs.saveLastValue(
+                        applicationContext, smartspacerId,
+                        value.copy(
+                            endTimeMs = Countdown.nextEndTime(
+                                previousEnd, value.state, value.unit, value.timestamp
+                            )
+                        )
+                    )
                     Result.success()
                 }
-                // Dauerhafter Fehler (falscher Token/Entity) — letzten Wert stehen lassen, nicht wiederholen
-                is FetchResult.HttpError -> Result.failure()
+                // Vorübergehend (HA startet neu, Proxy 502) — wie ein Netzwerkfehler behandeln
+                is FetchResult.HttpError ->
+                    if (result.isTransient) retryOrGiveUp() else Result.failure()
+                // Dauerhaft (falscher Token/Entity, kaputte URL) — letzten Wert stehen lassen
+                is FetchResult.ConfigError -> Result.failure()
                 // Vorübergehender Fehler — mit Backoff wiederholen, bis MAX_ATTEMPTS erreicht ist
-                is FetchResult.NetworkError ->
-                    if (runAttemptCount + 1 < MAX_ATTEMPTS) Result.retry() else Result.failure()
+                is FetchResult.NetworkError -> retryOrGiveUp()
             }
         } finally {
             SmartspacerTargetProvider.notifyChange(
@@ -50,4 +62,7 @@ class TimerWorker(
             )
         }
     }
+
+    private fun retryOrGiveUp(): Result =
+        if (runAttemptCount + 1 < MAX_ATTEMPTS) Result.retry() else Result.failure()
 }

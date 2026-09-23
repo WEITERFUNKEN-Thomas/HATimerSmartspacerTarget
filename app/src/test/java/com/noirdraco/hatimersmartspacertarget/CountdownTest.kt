@@ -128,5 +128,58 @@ class CountdownTest {
         assertEquals(CountdownState.None, Countdown.evaluate(null, fetchedAt, 30))
     }
 
+    // --- Restzeit „0“: Ende oder Leerlauf? --------------------------------------------------
+
+    @Test
+    fun restzeitNull_ohneVorherigenCountdown_istLeerlauf() {
+        // Gerät im Leerlauf meldet „0 min“. Das darf nicht bei jedem Abruf ein neues „Fertig“
+        // auslösen — sonst stünde es dauerhaft da.
+        assertNull(Countdown.nextEndTime(null, "0", "min", fetchedAt))
+    }
+
+    @Test
+    fun restzeitNull_nachLaufendemCountdown_behaeltDessenEnde() {
+        val previousEnd = fetchedAt - 5 * 60_000L
+        assertEquals(previousEnd, Countdown.nextEndTime(previousEnd, "0", "min", fetchedAt))
+    }
+
+    @Test
+    fun restzeitNull_obwohlNochZeitErwartet_endetJetzt() {
+        // Durchlauf früher fertig oder abgebrochen
+        val previousEnd = fetchedAt + 20 * 60_000L
+        assertEquals(fetchedAt, Countdown.nextEndTime(previousEnd, "0", "min", fetchedAt))
+    }
+
+    @Test
+    fun restzeitNull_imLeerlauf_haeltAltesEndeFest() {
+        // Das alte Ende wandert nicht mit jedem Abruf nach vorn, der Nachlauf läuft also aus.
+        val previousEnd = fetchedAt - 3 * 3_600_000L
+        val end = Countdown.nextEndTime(previousEnd, "0", "min", fetchedAt)
+        assertEquals(previousEnd, end)
+        assertEquals(CountdownState.None, Countdown.evaluate(end, fetchedAt, 30))
+    }
+
+    @Test
+    fun laufendeRestzeit_ignoriertVorherigesEnde() {
+        assertEquals(
+            fetchedAt + 42 * 60_000L,
+            Countdown.nextEndTime(fetchedAt - 60_000L, "42", "min", fetchedAt)
+        )
+    }
+
+    @Test
+    fun zeitstempelInDerVergangenheit_bleibtUnveraendert() {
+        // Die Sonderregel gilt nur für Restzeiten: Ein vergangener Zeitstempel ist ein echtes Ende.
+        val previousEnd = fetchedAt - 3 * 3_600_000L
+        assertEquals(
+            Instant.parse("2026-08-26T11:55:00Z").toEpochMilli(),
+            Countdown.nextEndTime(previousEnd, "2026-08-26T11:55:00+00:00", "", fetchedAt)
+        )
+    }
+
+    @Test
+    fun geraetAus_verwirftVorherigesEnde() {
+        assertNull(Countdown.nextEndTime(fetchedAt + 60_000L, "unavailable", "", fetchedAt))
+    }
 
 }

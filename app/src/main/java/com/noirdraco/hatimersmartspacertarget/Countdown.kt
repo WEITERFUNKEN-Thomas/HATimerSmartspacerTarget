@@ -49,6 +49,25 @@ object Countdown {
     }
 
     /**
+     * Zielzeitpunkt nach einem neuen Abruf, mit Blick auf den vorherigen ([previousEndMs]).
+     *
+     * Nötig wegen eines Sonderfalls bei Restzeit-Sensoren: „0“ heißt entweder „gerade fertig
+     * geworden“ oder „Gerät im Leerlauf“. Für sich genommen ergäbe „0“ bei jedem Abruf ein Ende
+     * *jetzt* — ein Gerät, das im Leerlauf 0 meldet, stünde dann dauerhaft auf „Fertig“, weil der
+     * Nachlauf mit jedem Abruf von vorn begänne. Deshalb gilt „0“ nur als Ende, wenn vorher ein
+     * Zielzeitpunkt bekannt war, und zwar *dieser* (höchstens jetzt, falls früher fertig). Ohne
+     * vorherigen Zielzeitpunkt ist es Leerlauf.
+     *
+     * Zeitstempel-Sensoren betrifft das nicht: Ein vergangener Zeitpunkt ist dort ein echtes Ende.
+     */
+    fun nextEndTime(previousEndMs: Long?, state: String, unit: String, fetchedAtMs: Long): Long? {
+        val end = parseEndTime(state, unit, fetchedAtMs) ?: return null
+        val zeroDuration = end == fetchedAtMs && parseTimestamp(state.trim()) == null
+        if (!zeroDuration) return end
+        return previousEndMs?.coerceAtMost(fetchedAtMs)
+    }
+
+    /**
      * [remainMinutes] ist die Nachlaufzeit: So lange nach Ablauf bleibt „Fertig“ stehen, danach
      * verschwindet das Target.
      */

@@ -12,8 +12,15 @@ import java.util.concurrent.TimeUnit
  */
 sealed class FetchResult {
     data class Success(val value: SensorValue) : FetchResult()
-    data class HttpError(val code: Int) : FetchResult()
+    data class HttpError(val code: Int) : FetchResult() {
+        // 5xx kommt z. B. vom Reverse-Proxy, solange Home Assistant neu startet; 408/429 sind
+        // ausdrücklich „später nochmal“. Nur 4xx sonst (401 Token, 404 Entity) ist dauerhaft.
+        val isTransient: Boolean get() = code == 408 || code == 429 || code >= 500
+    }
     data class NetworkError(val message: String) : FetchResult()
+
+    /** Eingabe unbrauchbar (URL ohne `http://`, Steuerzeichen im Token) — Wiederholen hilft nie. */
+    data class ConfigError(val message: String) : FetchResult()
 }
 
 /**
@@ -28,11 +35,17 @@ object HomeAssistantApi {
         .build()
 
     fun fetch(settings: TimerSettings): FetchResult {
-        val url = settings.baseUrl.trimEnd('/') + "/api/states/" + settings.entityId
-        val request = Request.Builder()
-            .url(url)
-            .header("Authorization", "Bearer ${settings.token}")
-            .build()
+        // Innerhalb des try, aber getrennt vom Abruf: url() und header() werfen bei ungültiger
+        // Eingabe IllegalArgumentException — etwa bei „homeassistant.local:8123“ ohne Schema. Das
+        // flog früher ungefangen durch und brachte den Verbindungstest zum Absturz.
+        val request = try {
+            Request.Builder()
+                .url(settings.baseUrl.trimEnd('/') + "/api/states/" + settings.entityId)
+                .header("Authorization", "Bearer ${settings.token}")
+                .build()
+        } catch (e: IllegalArgumentException) {
+            return FetchResult.ConfigError(e.message ?: e.javaClass.simpleName)
+        }
         return try {
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) return FetchResult.HttpError(response.code)
@@ -40,15 +53,21 @@ object HomeAssistantApi {
                     ?: return FetchResult.NetworkError("Leere Antwort")
                 val json = JSONObject(body)
                 val attributes = json.optJSONObject("attributes")
+                val state = json.getString("state")
+                val unit = attributes?.optString("unit_of_measurement").orEmpty()
+                val now = System.currentTimeMillis()
                 FetchResult.Success(
                     SensorValue(
-                        state = json.getString("state"),
+                        state = state,
                         friendlyName = attributes?.optString("friendly_name")
                             ?.takeIf { it.isNotBlank() } ?: settings.entityId,
-                        unit = attributes?.optString("unit_of_measurement").orEmpty(),
+                        unit = unit,
                         icon = attributes?.optString("icon").orEmpty(),
                         deviceClass = attributes?.optString("device_class").orEmpty(),
-                        timestamp = System.currentTimeMillis()
+                        timestamp = now,
+                        // Ohne Vorgeschichte gerechnet; der Worker verfeinert das mit dem
+                        // vorherigen Wert (Countdown.nextEndTime)
+                        endTimeMs = Countdown.parseEndTime(state, unit, now)
                     )
                 )
             }

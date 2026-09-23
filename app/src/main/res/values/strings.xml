@@ -27,5 +27,7 @@
     <string name="setup_test_ok">✓ %1$s: noch %2$d Minuten</string>
     <string name="setup_test_no_time">✗ %1$s liefert „%2$s“ — daraus lässt sich keine Zeit lesen. Der Sensor braucht einen Zeitpunkt oder eine Restzeit als Zahl.</string>
     <string name="setup_test_http">✗ Fehler vom Server (HTTP %1$d). Token oder Entity-ID prüfen.</string>
+    <string name="setup_test_past">✓ %1$s liefert eine Zeit, die schon vorbei ist — der Sensor taugt, gerade läuft nur nichts. Die Karte erscheint beim nächsten Durchlauf.</string>
+    <string name="setup_test_config">✗ Ungültige Eingabe: %1$s. Die URL muss mit http:// oder https:// beginnen.</string>
     <string name="setup_test_network">✗ Keine Verbindung: %1$s. URL und Netzwerk prüfen.</string>
 </resources>

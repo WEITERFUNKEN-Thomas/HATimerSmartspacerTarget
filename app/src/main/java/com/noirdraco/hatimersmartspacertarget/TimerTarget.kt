@@ -58,9 +58,7 @@ class TimerTarget : SmartspacerTargetProvider() {
 
         val value = TimerPrefs.loadLastValue(context, smartspacerId)
         val now = System.currentTimeMillis()
-        val endTime = value?.let { Countdown.parseEndTime(it.state, it.unit, it.timestamp) }
-
-        return when (val state = Countdown.evaluate(endTime, now, settings.remainMinutes)) {
+        return when (val state = Countdown.evaluate(value?.endTimeMs, now, settings.remainMinutes)) {
             // Kein Zielzeitpunkt (Gerät aus, Sensor leer) oder Nachlauf vorbei: Das Target
             // verschwindet komplett aus dem Smartspace.
             is CountdownState.None -> emptyList()

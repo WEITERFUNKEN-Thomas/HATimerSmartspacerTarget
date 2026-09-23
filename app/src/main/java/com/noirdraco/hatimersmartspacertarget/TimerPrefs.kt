@@ -45,7 +45,11 @@ data class SensorValue(
     // HA-Attribut "device_class", z. B. "timestamp" — Zweitquelle fürs Icon
     val deviceClass: String,
     // Zeitpunkt des Abrufs — Basis für Restzeit-Sensoren, siehe [Countdown.parseEndTime]
-    val timestamp: Long
+    val timestamp: Long,
+    // Daraus errechneter Zielzeitpunkt, `null` = keiner. Wird mitgespeichert statt bei jeder
+    // Anzeige neu gerechnet, weil er vom vorherigen Abruf abhängen kann (siehe
+    // [Countdown.nextEndTime]).
+    val endTimeMs: Long?
 )
 
 /**
@@ -90,6 +94,14 @@ object TimerPrefs {
     }
 
     fun saveSettings(context: Context, smartspacerId: String, settings: TimerSettings) {
+        // Anderer Sensor: Der zwischengespeicherte Wert gehört nicht mehr dazu. Er würde sonst bis
+        // zum ersten Abruf angezeigt und dort als „vorheriger Zielzeitpunkt“ mitgerechnet.
+        val previous = loadSettings(context, smartspacerId)
+        if (previous != null &&
+            (previous.baseUrl != settings.baseUrl || previous.entityId != settings.entityId)
+        ) {
+            prefs(context).edit { remove(KEY_LAST_VALUE_PREFIX + smartspacerId) }
+        }
         val json = JSONObject()
             .put("baseUrl", settings.baseUrl)
             .put("token", settings.token)
@@ -123,6 +135,9 @@ object TimerPrefs {
             .put("icon", value.icon)
             .put("deviceClass", value.deviceClass)
             .put("timestamp", value.timestamp)
+            // JSONObject.NULL statt null: put(key, null) entfernte den Schlüssel, und ein fehlender
+            // Schlüssel heißt beim Laden „alter Cache, bitte neu rechnen“.
+            .put("endTimeMs", value.endTimeMs ?: JSONObject.NULL)
         prefs(context).edit { putString(KEY_LAST_VALUE_PREFIX + smartspacerId, json.toString()) }
     }
 
@@ -130,13 +145,22 @@ object TimerPrefs {
         val raw = prefs(context).getString(KEY_LAST_VALUE_PREFIX + smartspacerId, null) ?: return null
         return runCatching {
             val json = JSONObject(raw)
+            val state = json.getString("state")
+            val unit = json.optString("unit")
+            val timestamp = json.getLong("timestamp")
             SensorValue(
-                state = json.getString("state"),
+                state = state,
                 friendlyName = json.getString("friendlyName"),
-                unit = json.optString("unit"),
+                unit = unit,
                 icon = json.optString("icon"),
                 deviceClass = json.optString("deviceClass"),
-                timestamp = json.getLong("timestamp")
+                timestamp = timestamp,
+                endTimeMs = when {
+                    // Cache aus einer Version ohne dieses Feld
+                    !json.has("endTimeMs") -> Countdown.parseEndTime(state, unit, timestamp)
+                    json.isNull("endTimeMs") -> null
+                    else -> json.getLong("endTimeMs")
+                }
             )
         }.getOrNull()
     }
