@@ -77,6 +77,12 @@ class SetupActivity : Activity() {
 
         findViewById<Button>(R.id.button_save).setOnClickListener {
             val settings = currentInput() ?: return@setOnClickListener
+            // Unbrauchbare Eingabe (URL ohne http://) nicht speichern: Jeder Abruf scheiterte daran
+            // dauerhaft, und die Karte bliebe ohne jede Meldung unsichtbar.
+            HomeAssistantApi.configError(settings)?.let {
+                statusView.text = getString(R.string.setup_test_config, it)
+                return@setOnClickListener
+            }
             TimerPrefs.saveSettings(this, smartspacerId, settings)
             // Fürs Auffrischen per Doze-Heartbeat registrieren, bevor der Alarm gesetzt wird
             TimerPrefs.addTargetId(this, smartspacerId)

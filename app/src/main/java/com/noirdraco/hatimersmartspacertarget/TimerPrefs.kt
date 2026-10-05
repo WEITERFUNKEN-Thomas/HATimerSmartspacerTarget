@@ -191,6 +191,11 @@ object TimerPrefs {
                 TimeUnit.MILLISECONDS
             )
             .build()
+        // Bewusst REPLACE, nicht KEEP: Wiederholungen nach einem Fehlschlag laufen bei WorkManager
+        // nie expedited („Retries cannot be expedited jobs“, SystemJobInfoConverter). Mit KEEP
+        // blockierte ein im Backoff wartender Abruf jeden neuen Heartbeat — im Doze also genau die
+        // Versuche, die als einzige ein Netzfenster bekämen. Der Preis von REPLACE ist höchstens
+        // ein doppelter Abruf, wenn zwei Auslöser zusammenfallen.
         WorkManager.getInstance(context).enqueueUniqueWork(
             workName(smartspacerId),
             ExistingWorkPolicy.REPLACE,
@@ -254,7 +259,8 @@ object TimerPrefs {
     // sind im Standby/Doze verlässlich; AlarmManager mit setAndAllowWhileIdle feuert dagegen auch
     // im Doze und stößt dann einen expedited Refresh an. Es gibt keine wiederholende Idle-Variante,
     // daher als Einzel-Alarm, den der Receiver bei jedem Feuern neu setzt (selbstheilend auch aus
-    // dem Setup und jedem Worker-Lauf, deshalb braucht es keinen BOOT_COMPLETED-Receiver).
+    // dem Setup und jedem Worker-Lauf). Einen Neustart überlebt der Alarm nicht — dafür gibt es
+    // den Anker oben.
     //
     // Die Anzeige selbst hängt *nicht* daran: Gezeigt wird ein fester Zielzeitpunkt, der nicht
     // veralten kann (siehe [TimerTarget]). Der Heartbeat sorgt nur dafür, dass wir mitbekommen,

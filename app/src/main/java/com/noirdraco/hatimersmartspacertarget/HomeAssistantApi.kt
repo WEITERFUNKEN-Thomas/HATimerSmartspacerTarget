@@ -34,15 +34,29 @@ object HomeAssistantApi {
         .readTimeout(10, TimeUnit.SECONDS)
         .build()
 
+    private fun buildRequest(settings: TimerSettings): Request = Request.Builder()
+        .url(settings.baseUrl.trimEnd('/') + "/api/states/" + settings.entityId)
+        .header("Authorization", "Bearer ${settings.token}")
+        .build()
+
+    /**
+     * `null`, wenn sich aus [settings] eine Anfrage bauen lässt — sonst die Fehlermeldung. Ohne
+     * Netzwerk, also auch vom Main-Thread aus erlaubt: Die Einrichtung prüft damit vor dem
+     * Speichern, statt eine URL abzulegen, an der jeder spätere Abruf still scheitert.
+     */
+    fun configError(settings: TimerSettings): String? = try {
+        buildRequest(settings)
+        null
+    } catch (e: IllegalArgumentException) {
+        e.message ?: e.javaClass.simpleName
+    }
+
     fun fetch(settings: TimerSettings): FetchResult {
-        // Innerhalb des try, aber getrennt vom Abruf: url() und header() werfen bei ungültiger
-        // Eingabe IllegalArgumentException — etwa bei „homeassistant.local:8123“ ohne Schema. Das
-        // flog früher ungefangen durch und brachte den Verbindungstest zum Absturz.
+        // Getrennt vom Abruf: url() und header() werfen bei ungültiger Eingabe
+        // IllegalArgumentException — etwa bei „homeassistant.local:8123“ ohne Schema. Das flog
+        // früher ungefangen durch und brachte den Verbindungstest zum Absturz.
         val request = try {
-            Request.Builder()
-                .url(settings.baseUrl.trimEnd('/') + "/api/states/" + settings.entityId)
-                .header("Authorization", "Bearer ${settings.token}")
-                .build()
+            buildRequest(settings)
         } catch (e: IllegalArgumentException) {
             return FetchResult.ConfigError(e.message ?: e.javaClass.simpleName)
         }
