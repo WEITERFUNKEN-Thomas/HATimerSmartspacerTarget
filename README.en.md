@@ -9,6 +9,15 @@ It deliberately shows the **point in time**, not the time left. A fixed point ne
 and cannot go stale, whereas a remaining time is simply wrong once it is a few minutes old. As a
 result the plugin uses practically no power while running.
 
+## Installation
+
+Requirements: **Android 17 or newer** and an installed
+[Smartspacer](https://github.com/KieronQuinn/Smartspacer).
+
+Download the APK from the [Releases](https://github.com/WEITERFUNKEN-Thomas/HATimerSmartspacerTarget/releases)
+and install it. The plugin has no app icon of its own — you set it up directly in Smartspacer
+(see below).
+
 ## Setup
 
 ### 1. Get the values from Home Assistant

@@ -9,6 +9,15 @@ Angezeigt wird bewusst der **Zeitpunkt**, nicht die Restzeit. Ein fester Zeitpun
 aktualisiert werden und kann nicht veralten; eine Restzeit wäre schlicht falsch, sobald sie ein
 paar Minuten alt ist. Das Plugin verbraucht dadurch im Betrieb praktisch keinen Strom.
 
+## Installation
+
+Voraussetzungen: **Android 17 oder neuer** und ein installiertes
+[Smartspacer](https://github.com/KieronQuinn/Smartspacer).
+
+Die APK aus den [Releases](https://github.com/WEITERFUNKEN-Thomas/HATimerSmartspacerTarget/releases)
+laden und installieren. Das Plugin hat kein eigenes App-Symbol — eingerichtet wird es direkt in
+Smartspacer (siehe unten).
+
 ## Einrichtung
 
 ### 1. Werte in Home Assistant besorgen
